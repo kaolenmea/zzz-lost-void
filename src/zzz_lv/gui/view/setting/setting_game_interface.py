@@ -1,4 +1,6 @@
-from PySide6.QtWidgets import QWidget
+import os
+
+from PySide6.QtWidgets import QFileDialog, QWidget
 from qfluentwidgets import FluentIcon, InfoBar, PushButton, SettingCardGroup
 
 from one_dragon.base.config.basic_game_config import (
@@ -7,11 +9,13 @@ from one_dragon.base.config.basic_game_config import (
     ScreenSizeEnum,
     TypeInputWay,
 )
+from one_dragon.base.config.game_account_config import GameRegionEnum
 from one_dragon.base.controller.pc_button import pc_button_utils
 from one_dragon.base.controller.pc_button.ds4_button_controller import Ds4ButtonEnum
 from one_dragon.base.controller.pc_button.xbox_button_controller import XboxButtonEnum
 from one_dragon.utils import cmd_utils
 from one_dragon.utils.i18_utils import gt
+from one_dragon.utils.log_utils import log
 from one_dragon_qt.widgets.column import Column
 from one_dragon_qt.widgets.combo_box import ComboBox
 from one_dragon_qt.widgets.setting_card.combo_box_setting_card import (
@@ -28,6 +32,7 @@ from one_dragon_qt.widgets.setting_card.key_setting_card import KeySettingCard
 from one_dragon_qt.widgets.setting_card.multi_push_setting_card import (
     MultiPushSettingCard,
 )
+from one_dragon_qt.widgets.setting_card.push_setting_card import PushSettingCard
 from one_dragon_qt.widgets.setting_card.spin_box_setting_card import (
     DoubleSpinBoxSettingCard,
 )
@@ -59,17 +64,71 @@ class SettingGameInterface(VerticalScrollInterface):
         content_widget = Column()
 
         self.help_opt = HelpCard(
-            url='https://one-dragon.com/zzz/zh/setting/setting_game.html',
             title='设置说明',
             content='游戏路径、输入方式等基础设置，建议首次使用前检查一遍',
         )
         content_widget.add_widget(self.help_opt)
 
+        content_widget.add_widget(self._get_game_group())
         content_widget.add_widget(self._get_basic_group())
         content_widget.add_widget(self._get_key_settings_group())
         content_widget.add_stretch(1)
 
         return content_widget
+
+    def _get_game_group(self) -> QWidget:
+        """
+        游戏路径、区服和自动登录 未打开游戏时按这里的配置自动启动并登录
+        """
+        game_group = SettingCardGroup(gt('游戏'))
+
+        self.game_path_opt = PushSettingCard(icon=FluentIcon.FOLDER, title='游戏路径', text='选择')
+        self.game_path_opt.clicked.connect(self._on_game_path_clicked)
+        game_group.addSettingCard(self.game_path_opt)
+
+        self.game_region_opt = ComboBoxSettingCard(icon=FluentIcon.GLOBE, title='游戏区服', options_enum=GameRegionEnum)
+        self.game_region_opt.value_changed.connect(self._on_game_region_changed)
+        game_group.addSettingCard(self.game_region_opt)
+
+        login_group = ExpandSettingCardGroup(
+            icon=FluentIcon.PEOPLE,
+            title='自动登录（可选）',
+            content='自动启动游戏后遇到登录界面时使用；游戏保持登录状态时不需要填写',
+        )
+        game_group.addSettingCard(login_group)
+
+        self.game_account_opt = TextSettingCard(
+            icon=FluentIcon.PEOPLE,
+            title='账号',
+            input_placeholder='所有信息都明文保存在本地',
+        )
+        login_group.addSettingCard(self.game_account_opt)
+
+        self.game_password_opt = TextSettingCard(
+            icon=FluentIcon.EXPRESSIVE_INPUT_ENTRY,
+            title='密码',
+            input_placeholder='请自行妥善管理',
+            is_password=True,
+        )
+        login_group.addSettingCard(self.game_password_opt)
+
+        self.bilibili_account_name_opt = TextSettingCard(
+            icon=FluentIcon.PEOPLE,
+            title='B服用户名',
+            content='B服为选择已有登录记录的用户进行登录，需要先手动登录游戏',
+            input_placeholder='填写游戏中切换B服账号时显示的用户名',
+        )
+        login_group.addSettingCard(self.bilibili_account_name_opt)
+
+        self.force_login_opt = SwitchSettingCard(
+            icon=FluentIcon.SYNC,
+            title='强制重新登录',
+            content='开启后会使用上面的账号重新登录，关闭时直接使用游戏当前登录状态',
+        )
+        self.force_login_opt.value_changed.connect(self.ctx.one_dragon_config.set_current_instance_force_login)
+        login_group.addSettingCard(self.force_login_opt)
+
+        return game_group
 
     def _get_basic_group(self) -> QWidget:
         basic_group = SettingCardGroup(gt('游戏基础'))
@@ -85,7 +144,7 @@ class SettingGameInterface(VerticalScrollInterface):
         self.hdr_btn_disable = PushButton(text=gt('禁用 HDR'), icon=FluentIcon.SETTING, parent=self)
         self.hdr_btn_disable.clicked.connect(self._on_hdr_disable_clicked)
         self.hdr_btn = MultiPushSettingCard(icon=FluentIcon.SETTING, title='切换 HDR 状态',
-                                            content='仅影响手动启动游戏，一条龙启动游戏会自动禁用 HDR',
+                                            content='仅影响手动启动游戏，自动启动游戏时会自动禁用 HDR',
                                             btn_list=[self.hdr_btn_disable, self.hdr_btn_enable])
         basic_group.addSettingCard(self.hdr_btn)
 
@@ -238,6 +297,15 @@ class SettingGameInterface(VerticalScrollInterface):
     def on_interface_shown(self) -> None:
         VerticalScrollInterface.on_interface_shown(self)
 
+        self.game_path_opt.setContent(self.ctx.game_account_config.game_path)
+        self.game_region_opt.init_with_adapter(self.ctx.game_account_config.get_prop_adapter('game_region'))
+        self.game_account_opt.init_with_adapter(self.ctx.game_account_config.get_prop_adapter('account'))
+        self.game_password_opt.init_with_adapter(self.ctx.game_account_config.get_prop_adapter('password'))
+        self.bilibili_account_name_opt.init_with_adapter(
+            self.ctx.game_account_config.get_prop_adapter('bilibili_account_name'))
+        self.force_login_opt.setValue(self.ctx.one_dragon_config.current_instance_force_login, emit_signal=False)
+        self._update_login_cards(self.ctx.game_account_config.game_region)
+
         self.input_way_opt.init_with_adapter(self.ctx.game_config.type_input_way_adapter)
 
         self.background_mode_switch.init_with_adapter(self.ctx.game_config.get_prop_adapter('background_mode'))
@@ -266,6 +334,26 @@ class SettingGameInterface(VerticalScrollInterface):
         self.ds4_key_press_time_opt.init_with_adapter(self.ctx.game_config.get_prop_adapter('ds4_key_press_time'))
         for action, card in self._ds4_cards.items():
             card.init_with_adapter(self.ctx.game_config.get_prop_adapter(f'ds4_key_{action.value.value}'))
+
+    def _on_game_path_clicked(self) -> None:
+        executable_name = self.ctx.project_config.game_executable_name
+        file_path, _ = QFileDialog.getOpenFileName(self, f"{gt('选择你的')} {executable_name}", filter='Exe (*.exe)')
+        if file_path and file_path.endswith('.exe'):
+            file_path = os.path.normpath(file_path)
+            log.info(f"{gt('选择路径')} {file_path}")
+            self.ctx.game_account_config.game_path = file_path
+            self.game_path_opt.setContent(file_path)
+
+    def _on_game_region_changed(self, _: int, value: str) -> None:
+        self._update_login_cards(value)
+        self.ctx.init_controller()
+
+    def _update_login_cards(self, game_region: str) -> None:
+        """B服用B服用户名登录 其它区服用账号密码登录"""
+        is_bilibili = game_region == GameRegionEnum.CNB.value.value
+        self.game_account_opt.setVisible(not is_bilibili)
+        self.game_password_opt.setVisible(not is_bilibili)
+        self.bilibili_account_name_opt.setVisible(is_bilibili)
 
     def _toggle_gamepad_cards(self, index: int) -> None:
         """根据头部下拉框切换 Xbox/DS4 卡片可见性"""

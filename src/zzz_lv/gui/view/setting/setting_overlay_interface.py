@@ -8,6 +8,9 @@ from one_dragon_qt.overlay.overlay_config import OverlayConfig
 from one_dragon_qt.overlay.overlay_manager import OverlayManager
 from one_dragon_qt.overlay.utils import win32_utils
 from one_dragon_qt.widgets.column import Column
+from one_dragon_qt.widgets.setting_card.expand_setting_card_group import (
+    ExpandSettingCardGroup,
+)
 from one_dragon_qt.widgets.setting_card.help_card import HelpCard
 from one_dragon_qt.widgets.setting_card.key_setting_card import KeySettingCard
 from one_dragon_qt.widgets.setting_card.push_setting_card import PushSettingCard
@@ -22,7 +25,10 @@ from zzz_lv.context.zzz_context import ZContext
 
 
 class SettingOverlayInterface(VerticalScrollInterface):
-    """Overlay settings page."""
+    """
+    Overlay 设置页
+    常用项直接显示 面板外观折叠在「高级设置」 视觉绘制/调试面板/性能指标/截图只在开发者模式下显示
+    """
     _PERF_CORE_METRICS = (
         ("OCR 耗时", "ocr_ms"),
         ("YOLO 耗时", "yolo_ms"),
@@ -38,7 +44,7 @@ class SettingOverlayInterface(VerticalScrollInterface):
         super().__init__(
             content_widget=None,
             object_name="setting_overlay_interface",
-            nav_text_cn="Overlay",
+            nav_text_cn="悬浮层",
             nav_icon=FluentIcon.VIEW,
             parent=parent,
         )
@@ -46,16 +52,20 @@ class SettingOverlayInterface(VerticalScrollInterface):
     def get_content_widget(self) -> QWidget:
         content_widget = Column()
         self.help_opt = HelpCard(
-            url='https://one-dragon.com/zzz/zh/setting/setting_overlay.html',
             title='设置说明',
-            content='Overlay 属于测试功能，显示异常或影响截图时请先查看说明',
+            content='Overlay 是游戏窗口上的悬浮层，用于显示运行日志和状态，属于测试功能',
         )
         content_widget.add_widget(self.help_opt)
         content_widget.add_widget(self._init_basic_group())
-        content_widget.add_widget(self._init_visual_group())
-        content_widget.add_widget(self._init_panel_group())
-        content_widget.add_widget(self._init_perf_group())
-        content_widget.add_widget(self._init_capture_group())
+
+        # 调试相关 仅开发者模式显示
+        self.developer_widget = Column()
+        self.developer_widget.add_widget(self._init_debug_panel_group())
+        self.developer_widget.add_widget(self._init_visual_group())
+        self.developer_widget.add_widget(self._init_perf_group())
+        self.developer_widget.add_widget(self._init_capture_group())
+        content_widget.add_widget(self.developer_widget)
+
         content_widget.add_stretch(1)
         return content_widget
 
@@ -93,6 +103,22 @@ class SettingOverlayInterface(VerticalScrollInterface):
         )
         self.anti_capture_opt.value_changed.connect(self._on_config_changed)
         group.addSettingCard(self.anti_capture_opt)
+
+        self.log_panel_opt = SwitchSettingCard(
+            icon=FluentIcon.DOCUMENT,
+            title="显示日志面板",
+        )
+        self.log_panel_opt.value_changed.connect(self._on_config_changed)
+        group.addSettingCard(self.log_panel_opt)
+
+        self.state_panel_opt = SwitchSettingCard(
+            icon=FluentIcon.SETTING,
+            title="显示状态面板",
+        )
+        self.state_panel_opt.value_changed.connect(self._on_config_changed)
+        group.addSettingCard(self.state_panel_opt)
+
+        group.addSettingCard(self._init_panel_style_group())
 
         return group
 
@@ -179,22 +205,8 @@ class SettingOverlayInterface(VerticalScrollInterface):
 
         return group
 
-    def _init_panel_group(self) -> SettingCardGroup:
-        group = SettingCardGroup(gt("面板与刷新"))
-
-        self.log_panel_opt = SwitchSettingCard(
-            icon=FluentIcon.DOCUMENT,
-            title="显示日志面板",
-        )
-        self.log_panel_opt.value_changed.connect(self._on_config_changed)
-        group.addSettingCard(self.log_panel_opt)
-
-        self.state_panel_opt = SwitchSettingCard(
-            icon=FluentIcon.SETTING,
-            title="显示状态面板",
-        )
-        self.state_panel_opt.value_changed.connect(self._on_config_changed)
-        group.addSettingCard(self.state_panel_opt)
+    def _init_debug_panel_group(self) -> SettingCardGroup:
+        group = SettingCardGroup(gt("调试面板"))
 
         self.decision_panel_opt = SwitchSettingCard(
             icon=FluentIcon.DOCUMENT,
@@ -216,6 +228,15 @@ class SettingOverlayInterface(VerticalScrollInterface):
         )
         self.performance_panel_opt.value_changed.connect(self._on_config_changed)
         group.addSettingCard(self.performance_panel_opt)
+
+        return group
+
+    def _init_panel_style_group(self) -> ExpandSettingCardGroup:
+        group = ExpandSettingCardGroup(
+            icon=FluentIcon.DEVELOPER_TOOLS,
+            title="高级设置",
+            content="面板位置、字体、透明度和刷新间隔",
+        )
 
         self.panel_edit_mode_opt = SwitchSettingCard(
             icon=FluentIcon.EDIT,
@@ -381,6 +402,7 @@ class SettingOverlayInterface(VerticalScrollInterface):
             self.config.get_prop_adapter("patched_capture_suffix")
         )
         self._sync_perf_metric_cards()
+        self.developer_widget.setVisible(self.ctx.env_config.developer_mode)
 
         if not win32_utils.is_windows_build_supported(19041):
             self.anti_capture_opt.setDisabled(True)

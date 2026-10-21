@@ -21,7 +21,7 @@
 | `list_applications` | `backend.list_applications()` | 当前实例可运行应用（每个 app 含 `app_id`/`app_name`/`description`[app 类 class docstring]）、独立应用列表和当前选中项（只读，不刷新配置） |
 | `get_predefined_teams` | `backend.list_predefined_teams()` | 当前实例预备编队(`idx`/`name`/`auto_battle`/`agent_id_list`/`agent_name_list`/`weakness_list`,过滤占位;`agent_name_list` 角色中文名;`weakness_list` 中文=防卫战配置优先,没配取角色伤害属性;`idx` 喂给 `run_operation(op_id='zzz_lv.operation.choose_predefined_team.ChoosePredefinedTeam', args={'target_team_idx_list': [idx]})` 选配队) |
 | `run_one_dragon(block=False)` | `backend.run_one_dragon('mcp')` | 默认立刻返回启动状态；`block=True` 等待一条龙结束 |
-| `run_standalone_app(app_id=None, block=False)` | `backend.run_standalone_app('mcp', app_id)` | `app_id=None` 时使用 GUI「应用运行」当前选中项 |
+| `run_standalone_app(app_id=None, block=False)` | `backend.run_standalone_app('mcp', app_id)` | `app_id=None` 时使用配置里保存的独立应用选中项（本项目 GUI 已去掉「应用运行」页，建议显式传 `app_id`） |
 | `list_operations` | `operation_registry.scan_operations(ctx)` | 可运行自定义 op 列表（`op_id` + 参数 schema，纯反射不实例化） |
 | `describe_operation(op_id)` | `operation_registry.describe_operation(ctx, op_id)` | 单个 op 参数 schema + `description`（class/`__init__` docstring 摘要，去 `:param` 噪声）；每个参数标 `json_serializable` + 整体 `debuggable` |
 | `run_operation(op_id, args=None, block=False)` | `operation_registry` 校验 + 反序列化 + `run_slot._start`（op 路径） | 默认立刻返回；`block=True` 等结束；非 Operation / 缺参 / 不支持的数据类 / 并发拒绝返错误 JSON。`@dataclass`+`from_dict` 参数(如 `ChargePlanItem`)可从 dict 传入 |
@@ -77,7 +77,7 @@
 要点：
 
 - prompt 只描述调用顺序，不直接执行工具；实际执行仍由 MCP 客户端选择 tool。
-- `zzz_run_standalone_app` 支持传入 `app_id`，为空时提示使用 GUI「应用运行」当前选中项。
+- `zzz_run_standalone_app` 支持传入 `app_id`，为空时使用配置里保存的独立应用选中项。
 - 运行类 prompt 默认使用 `block=False` 启动，再轮询 `get_run_status`，便于客户端在长耗时任务中持续反馈状态。
 - 部分 MCP 客户端不会主动展示 prompts；这时可让 agent 先调用 `list_mcp_usage_guides`，再调用 `get_mcp_usage_guide` 读取同一份模板。
 

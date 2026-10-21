@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (
 )
 from qfluentwidgets import (
     FluentIcon,
-    HyperlinkButton,
     InfoBar,
     MessageBox,
     PushButton,
@@ -27,6 +26,9 @@ from one_dragon_qt.widgets.base_interface import BaseInterface
 from one_dragon_qt.widgets.column import Column
 from one_dragon_qt.widgets.setting_card.combo_box_setting_card import (
     ComboBoxSettingCard,
+)
+from one_dragon_qt.widgets.setting_card.expand_setting_card_group import (
+    ExpandSettingCardGroup,
 )
 from one_dragon_qt.widgets.setting_card.multi_push_setting_card import (
     MultiPushSettingCard,
@@ -52,7 +54,10 @@ from zzz_lv.gui.view.battle_assistant.battle_state_display import (
 
 
 class BattleAssistantInterface(AppRunInterface):
-    """战斗助手界面，合并自动战斗和闪避助手，整个配置区域使用 QStackedWidget"""
+    """
+    战斗助手界面，合并自动战斗和闪避助手，整个配置区域使用 QStackedWidget
+    右侧的战斗状态面板、合并配置开关、配置删除按钮只在开发者模式下显示
+    """
 
     auto_op_loaded_signal = Signal()
 
@@ -65,7 +70,7 @@ class BattleAssistantInterface(AppRunInterface):
             self,
             object_name='battle_assistant_interface',
             nav_text_cn='战斗助手',
-            nav_icon=FluentIcon.GAME,
+            nav_icon=FluentIcon.ROBOT,
             parent=parent,
         )
         self.ctx: ZContext = ctx
@@ -95,17 +100,17 @@ class BattleAssistantInterface(AppRunInterface):
         left_content = self.get_content_widget()
         content_hbox.addWidget(left_content, stretch=1)
 
-        # ---- 右侧：状态面板 ----
-        right_widget = QWidget()
-        right_widget.setMinimumWidth(350)
-        right_widget.setMaximumWidth(400)
-        right_layout = QVBoxLayout(right_widget)
+        # ---- 右侧：状态面板 仅开发者模式显示 ----
+        self.state_panel = QWidget()
+        self.state_panel.setMinimumWidth(350)
+        self.state_panel.setMaximumWidth(400)
+        right_layout = QVBoxLayout(self.state_panel)
         right_layout.setContentsMargins(0, 0, 0, 0)
         self.task_display = TaskDisplay(self.ctx)
         right_layout.addWidget(self.task_display)
         self.battle_state_display = BattleStateDisplay(self.ctx)
         right_layout.addWidget(self.battle_state_display)
-        content_hbox.addWidget(right_widget, stretch=0)
+        content_hbox.addWidget(self.state_panel, stretch=0)
 
     # ------------------------------------------------------------------
     # 页面构建
@@ -136,18 +141,6 @@ class BattleAssistantInterface(AppRunInterface):
         top.add_widget(self.mode_stacked)
 
         # 共用设置（两种模式共享）
-        self.gpu_opt = SwitchSettingCard(
-            icon=FluentIcon.GAME, title='GPU运算', content='游戏画面掉帧的话 可以不启用',
-        )
-        top.add_widget(self.gpu_opt)
-
-        self.screenshot_opt = DoubleSpinBoxSettingCard(
-            icon=FluentIcon.GAME, title='截图间隔 (秒)',
-            content='一般默认0.02，除非电脑很卡。优先通过设置游戏30帧和低画质给AI留算力',
-            minimum=0.02, maximum=0.1,
-        )
-        top.add_widget(self.screenshot_opt)
-
         self.background_mode_opt = SwitchSettingCard(
             icon=FluentIcon.ROBOT,
             title='后台模式（专享版）',
@@ -156,9 +149,40 @@ class BattleAssistantInterface(AppRunInterface):
         self.background_mode_opt.value_changed.connect(self._on_background_mode_changed)
         top.add_widget(self.background_mode_opt)
 
+        top.add_widget(self._build_advanced_group())
+
         self.mode_segment.setCurrentItem(self.MODE_AUTO_BATTLE)
 
         return top
+
+    def _build_advanced_group(self) -> QWidget:
+        """
+        高级设置 一般不需要改 默认折叠
+        """
+        group = ExpandSettingCardGroup(
+            icon=FluentIcon.DEVELOPER_TOOLS,
+            title='高级设置',
+            content='GPU 运算、截图间隔等性能相关选项，一般保持默认即可',
+        )
+
+        self.auto_ultimate_opt = SwitchSettingCard(
+            icon=FluentIcon.GAME, title='终结技一好就放', content='终结技无视时机立刻释放',
+        )
+        group.addSettingCard(self.auto_ultimate_opt)
+
+        self.gpu_opt = SwitchSettingCard(
+            icon=FluentIcon.GAME, title='GPU运算', content='游戏画面掉帧的话 可以不启用',
+        )
+        group.addSettingCard(self.gpu_opt)
+
+        self.screenshot_opt = DoubleSpinBoxSettingCard(
+            icon=FluentIcon.GAME, title='截图间隔 (秒)',
+            content='一般默认0.02，除非电脑很卡。优先通过设置游戏30帧和低画质给AI留算力',
+            minimum=0.02, maximum=0.1,
+        )
+        group.addSettingCard(self.screenshot_opt)
+
+        return group
 
     def _build_auto_battle_page(self) -> QWidget:
         page = Column()
@@ -167,21 +191,11 @@ class BattleAssistantInterface(AppRunInterface):
         desc_btn = PushButton(gt('如何让AI打得更好？'))
         desc_btn.clicked.connect(self._on_desc_clicked)
 
-        guide_btn = HyperlinkButton(
-            text=gt('查看指南'),
-            url='https://one-dragon.com/zzz/zh/feat/feat_game_assistant.html'
-        )
-
-        shared_btn = HyperlinkButton(
-            text=gt('前往社区'),
-            url='https://pd.qq.com/g/onedrag00n'
-        )
-
         help_card = MultiPushSettingCard(
             icon=FluentIcon.HELP,
             title='使用说明',
-            content='先看说明 再使用与提问',
-            btn_list=[desc_btn, guide_btn, shared_btn]
+            content='先看说明 再使用',
+            btn_list=[desc_btn]
         )
         page.add_widget(help_card)
 
@@ -196,12 +210,7 @@ class BattleAssistantInterface(AppRunInterface):
         self.config_opt.hBoxLayout.addSpacing(16)
         page.add_widget(self.config_opt)
 
-        # 自动战斗独有
-        self.auto_ultimate_opt = SwitchSettingCard(
-            icon=FluentIcon.GAME, title='终结技一好就放', content='终结技无视时机立刻释放',
-        )
-        page.add_widget(self.auto_ultimate_opt)
-
+        # 自动战斗独有 调试模板用 仅开发者模式显示
         self.merged_opt = SwitchSettingCard(
             icon=FluentIcon.GAME, title='使用合并配置文件', content='关闭用于调试模板文件 正常开启即可',
         )
@@ -243,8 +252,24 @@ class BattleAssistantInterface(AppRunInterface):
         self.mode_stacked.setCurrentWidget(
             self.auto_battle_page if is_auto else self.dodge_page
         )
+        self.auto_ultimate_opt.setVisible(is_auto)
         self.task_display.setVisible(is_auto)
-        self.task_display.set_update_display(is_auto)
+        self.task_display.set_update_display(is_auto and self.ctx.env_config.developer_mode)
+
+    def _update_developer_visibility(self) -> None:
+        """
+        按开发者模式刷新调试相关控件 切换开发者模式时由主窗口调用
+        """
+        if not self._init:
+            return
+        developer_mode = self.ctx.env_config.developer_mode
+        self.state_panel.setVisible(developer_mode)
+        self.merged_opt.setVisible(developer_mode)
+        self.config_del_btn.setVisible(developer_mode)
+        self.dodge_del_btn.setVisible(developer_mode)
+        if not developer_mode:
+            self.battle_state_display.set_update_display(False)
+            self.task_display.set_update_display(False)
 
     # ------------------------------------------------------------------
     # Config initialisation
@@ -359,6 +384,7 @@ class BattleAssistantInterface(AppRunInterface):
     def on_interface_shown(self) -> None:
         AppRunInterface.on_interface_shown(self)
         self._init_config_cards()
+        self._update_developer_visibility()
         self._on_background_mode_changed(self.ctx.battle_assistant_config.background_mode)
         self.ctx.listen_event(AutoBattleApp.EVENT_OP_LOADED, self._on_auto_op_loaded_event)
 
@@ -371,6 +397,8 @@ class BattleAssistantInterface(AppRunInterface):
         self.auto_op_loaded_signal.emit()
 
     def _on_auto_op_loaded_signal(self) -> None:
+        if not self.ctx.env_config.developer_mode:
+            return
         self.battle_state_display.set_update_display(True)
         is_auto = self.mode_stacked.currentWidget() is self.auto_battle_page
         self.task_display.set_update_display(is_auto)

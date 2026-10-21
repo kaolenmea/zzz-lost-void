@@ -8,12 +8,15 @@ try:
         NavigationItemPosition,
         Theme,
         setTheme,
+        setThemeColor,
     )
 
     from one_dragon.base.operation.one_dragon_context import ContextInstanceEventEnum
+    from one_dragon.utils import os_utils
     from one_dragon.utils.i18_utils import gt
     from one_dragon_qt.overlay.overlay_manager import OverlayManager
     from one_dragon_qt.services.styles_manager import OdQtStyleSheet
+    from one_dragon_qt.services.theme_manager import ThemeManager
     from one_dragon_qt.view.context_event_signal import ContextEventSignal
     from one_dragon_qt.windows.main_app_window_base import MainAppWindowBase
     from one_dragon_qt.windows.window import PhosTitleBar
@@ -108,29 +111,19 @@ try:
             self.home_interface = HomeInterface(self.ctx, parent=self)
             self.add_sub_interface(self.home_interface)
 
-            # 游戏助手
-            from zzz_lv.gui.view.game_assistant.game_assistant_interface import (
-                GameAssistantInterface,
-            )
-            self.add_sub_interface(GameAssistantInterface(self.ctx, parent=self))
-
             # 迷失之地
             from zzz_lv.gui.view.hollow_zero.lost_void_interface import (
                 LostVoidInterface,
             )
-            self.add_sub_interface(LostVoidInterface(self.ctx, parent=self))
+            self.lost_void_interface = LostVoidInterface(self.ctx, parent=self)
+            self.add_sub_interface(self.lost_void_interface)
 
-            # 一条龙
-            from zzz_lv.gui.view.one_dragon.zzz_one_dragon_interface import (
-                ZOneDragonInterface,
+            # 战斗助手
+            from zzz_lv.gui.view.battle_assistant.battle_assistant_interface import (
+                BattleAssistantInterface,
             )
-            self.add_sub_interface(ZOneDragonInterface(self.ctx, parent=self))
-
-            # 应用运行
-            from zzz_lv.gui.view.standalone.zzz_standalone_app_interface import (
-                ZStandaloneAppInterface,
-            )
-            self.add_sub_interface(ZStandaloneAppInterface(self.ctx, parent=self))
+            self.battle_assistant_interface = BattleAssistantInterface(self.ctx, parent=self)
+            self.add_sub_interface(self.battle_assistant_interface)
 
             # 画中画
             from one_dragon_qt.widgets.pip_button import PipButton
@@ -157,15 +150,6 @@ try:
                     self.download_queue,
                     parent=self,
                 ),
-                position=NavigationItemPosition.BOTTOM,
-            )
-
-            # 多账号管理
-            from zzz_lv.gui.view.accounts.app_accounts_interface import (
-                AccountsInterface,
-            )
-            self.add_sub_interface(
-                AccountsInterface(self.ctx, parent=self),
                 position=NavigationItemPosition.BOTTOM,
             )
 
@@ -252,6 +236,8 @@ def main() -> None:
 
         sys.exit(1)
 
+    os_utils.ensure_admin()
+
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
@@ -260,8 +246,12 @@ def main() -> None:
 
     _ctx = ZContext()
 
-    # 设置主题
+    # 设置主题 未开启自定义主题色时使用默认主题色
     setTheme(Theme[_ctx.custom_config.theme.upper()])
+    if _ctx.custom_config.custom_theme_color:
+        ThemeManager.load_from_config(_ctx)
+    else:
+        setThemeColor(ThemeManager.get_qcolor())
 
     # 创建并显示主窗口
     w = AppWindow(_ctx)

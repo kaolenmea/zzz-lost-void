@@ -296,6 +296,9 @@ def get_all_lost_void_challenge_config(with_sample: bool = True) -> list[LostVoi
             if not with_sample:
                 continue
             module_name = config_name[:-11]
+            # 参数说明模板 只给人看 不作为可选配置
+            if module_name == 'parameter_template':
+                continue
         else:
             module_name = config_name[:-4]
 
@@ -332,4 +335,4 @@ def get_lost_void_challenge_new_name() -> str:
         except Exception:
             pass
 
-    return '%s%02d' % (prefix, max_idx + 1)
+    return f'{prefix}{max_idx + 1:02d}'

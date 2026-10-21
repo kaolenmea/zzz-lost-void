@@ -12,11 +12,15 @@ from qfluentwidgets import (
 
 from one_dragon.base.config.config_item import ConfigItem
 from one_dragon.utils.i18_utils import gt
+from one_dragon_qt.utils.layout_utils import Margins
 from one_dragon_qt.widgets.column import Column
 from one_dragon_qt.widgets.combo_box import ComboBox
 from one_dragon_qt.widgets.row import Row
 from one_dragon_qt.widgets.setting_card.combo_box_setting_card import (
     ComboBoxSettingCard,
+)
+from one_dragon_qt.widgets.setting_card.expand_setting_card_group import (
+    ExpandSettingCardGroup,
 )
 from one_dragon_qt.widgets.setting_card.switch_setting_card import SwitchSettingCard
 from one_dragon_qt.widgets.setting_card.text_setting_card import TextSettingCard
@@ -32,7 +36,7 @@ from zzz_lv.application.hollow_zero.lost_void.lost_void_challenge_config import 
 )
 from zzz_lv.config.team_config import PredefinedTeamInfo
 from zzz_lv.context.zzz_context import ZContext
-from zzz_lv.gui.view.one_dragon.predefined_team_interface import TeamSettingCard
+from zzz_lv.gui.view.hollow_zero.predefined_team_interface import TeamSettingCard
 
 
 class LostVoidChallengeConfigInterface(VerticalScrollInterface):
@@ -43,21 +47,25 @@ class LostVoidChallengeConfigInterface(VerticalScrollInterface):
             object_name='lost_void_challenge_config_interface',
             parent=parent,
             content_widget=None,
-            nav_text_cn='挑战配置-迷'
+            nav_text_cn='挑战配置'
         )
 
         self.ctx: ZContext = ctx
         self.chosen_config: LostVoidChallengeConfig | None = None
 
     def get_content_widget(self) -> QWidget:
-        content_widget = Row()
+        content_widget = Column()
 
-        content_widget.add_widget(self._init_left_part(), stretch=1)
-        content_widget.add_widget(self._init_right_part(), stretch=1)
+        content_widget.add_widget(self._init_basic_part())
+        content_widget.add_widget(self._init_advanced_part())
+        content_widget.add_stretch(1)
 
         return content_widget
 
-    def _init_left_part(self) -> QWidget:
+    def _init_basic_part(self) -> QWidget:
+        """
+        常用项 选配置、配队和调查战略
+        """
         widget = Column()
 
         btn_row = Row()
@@ -121,67 +129,68 @@ class LostVoidChallengeConfigInterface(VerticalScrollInterface):
         self.chase_new_mode_opt.value_changed.connect(self._on_chase_new_mode_toggled)
         widget.add_widget(self.chase_new_mode_opt)
 
-        self.investigation_strategy_opt = ComboBoxSettingCard(icon=FluentIcon.GAME, title='调查战略',
-                                                              options_enum=LostVoidPeriodBuffNo)
+        self.investigation_strategy_opt = ComboBoxSettingCard(icon=FluentIcon.GAME, title='调查战略')
         widget.add_widget(self.investigation_strategy_opt)
+
+        return widget
+
+    def _init_advanced_part(self) -> QWidget:
+        """
+        高级设置 商店、藏品和区域优先级 默认折叠
+        """
+        widget = ExpandSettingCardGroup(
+            icon=FluentIcon.DEVELOPER_TOOLS,
+            title='高级设置',
+            content='周期增益、商店购买、藏品和区域优先级，一般使用默认配置即可',
+        )
 
         self.period_buff_no_opt = ComboBoxSettingCard(icon=FluentIcon.GAME, title='周期增益',
                                                       options_enum=LostVoidPeriodBuffNo)
-        widget.add_widget(self.period_buff_no_opt)
+        widget.addSettingCard(self.period_buff_no_opt)
 
         self.store_gold_opt = SwitchSettingCard(icon=FluentIcon.GAME, title='商店-使用金币购买',
                                                 content='想不买东西速刷时或在刷取成就:「空洞金融大亨」时关闭')
-        widget.add_widget(self.store_gold_opt)
+        widget.addSettingCard(self.store_gold_opt)
 
         self.store_blood_opt = SwitchSettingCard(icon=FluentIcon.GAME, title='商店-使用血量购买',
                                                  content='练度低情况下 仅建议绝境武备开启')
-        widget.add_widget(self.store_blood_opt)
+        widget.addSettingCard(self.store_blood_opt)
 
         self.store_blood_min_opt = TextSettingCard(icon=FluentIcon.GAME, title='商店-使用血量购买',
                                                    content='血量 ≥ x% 时 才会进行购买')
-        widget.add_widget(self.store_blood_min_opt)
+        widget.addSettingCard(self.store_blood_min_opt)
 
         self.priority_new_opt = SwitchSettingCard(icon=FluentIcon.GAME, title='优先选择NEW!藏品',
                                                   content='最高优先级 但不保证识别正确')
-        widget.add_widget(self.priority_new_opt)
+        widget.addSettingCard(self.priority_new_opt)
 
         self.buy_only_priority_2_opt = TextSettingCard(icon=FluentIcon.GAME, title='x次内只买高优先级',
                                                        content='到达第 x 轮（已刷新 x-1 次）后 才购买高优先级之外的藏品')
-        widget.add_widget(self.buy_only_priority_2_opt)
+        widget.addSettingCard(self.buy_only_priority_2_opt)
 
-        widget.add_stretch(1)
-        return widget
-
-    def _init_right_part(self) -> QWidget:
-        widget = Column()
-
-        artifact_priority_widget = Column()
-        widget.add_widget(artifact_priority_widget)
-        artifact_priority_title = SubtitleLabel(text=gt('藏品第一优先级'))
-        artifact_priority_widget.v_layout.addWidget(artifact_priority_title)
-        self.artifact_priority_input = PlainTextEdit()
+        self.artifact_priority_input = self._add_priority_input(widget, '藏品第一优先级')
         self.artifact_priority_input.textChanged.connect(self._on_artifact_priority_changed)
-        artifact_priority_widget.v_layout.addWidget(self.artifact_priority_input)
 
-        artifact_priority_widget_2 = Column()
-        widget.add_widget(artifact_priority_widget_2)
-        artifact_priority_title_2 = SubtitleLabel(text=gt('藏品第二优先级 (无刷新时考虑)'))
-        artifact_priority_widget.v_layout.addWidget(artifact_priority_title_2)
-        self.artifact_priority_input_2 = PlainTextEdit()
+        self.artifact_priority_input_2 = self._add_priority_input(widget, '藏品第二优先级 (无刷新时考虑)')
         self.artifact_priority_input_2.textChanged.connect(self._on_artifact_priority_2_changed)
-        artifact_priority_widget.v_layout.addWidget(self.artifact_priority_input_2)
 
-        region_priority_widget = Column()
-        widget.add_widget(region_priority_widget)
-        region_priority_title = SubtitleLabel(text=gt('区域类型优先级'))
-        region_priority_widget.v_layout.addWidget(region_priority_title)
-        self.region_type_priority_input = PlainTextEdit()
+        self.region_type_priority_input = self._add_priority_input(widget, '区域类型优先级')
         self.region_type_priority_input.textChanged.connect(self._on_region_type_priority_changed)
-        region_priority_widget.v_layout.addWidget(self.region_type_priority_input)
-
-        widget.add_stretch(1)
 
         return widget
+
+    @staticmethod
+    def _add_priority_input(group: ExpandSettingCardGroup, title: str) -> PlainTextEdit:
+        """
+        在高级设置里加一个 标题 + 多行文本框 的优先级输入
+        """
+        column = Column(margins=Margins(16, 8, 16, 8))
+        column.add_widget(SubtitleLabel(text=gt(title)))
+        text_input = PlainTextEdit()
+        text_input.setMinimumHeight(160)
+        column.add_widget(text_input)
+        group.addSettingCard(column)
+        return text_input
 
     def on_interface_shown(self) -> None:
         """
@@ -327,17 +336,6 @@ class LostVoidChallengeConfigInterface(VerticalScrollInterface):
         self.chosen_config.copy_new()
         self._update_whole_display()
 
-    def _on_save_clicked(self) -> None:
-        """
-        保存配置
-        :return:
-        """
-        if self.chosen_config is None:
-            return
-
-        self.chosen_config.save()
-        self._update_existed_yml_options()
-
     def _on_delete_clicked(self) -> None:
         """
         删除
@@ -428,14 +426,12 @@ class LostVoidChallengeConfigInterface(VerticalScrollInterface):
         self.investigation_strategy_opt.setDisabled(is_sample or checked)
 
     def on_priority_team_changed(self, value: bool) -> None:
-        self.predefined_team_opt.setDisabled(
-            self.chosen_config.choose_team_by_priority or self.chosen_config.choose_team_by_priority)
+        # 当期UP 与 手动选择代理人 互斥 任一开启时不使用预备编队
+        self.predefined_team_opt.setDisabled(value or self.chosen_config.manually_choose_agent)
         self.manually_choose_agent_opt.setDisabled(value)
 
     def on_manually_choose_agent_changed(self, value: bool) -> None:
-        self.predefined_team_opt.setDisabled(
-            self.chosen_config.choose_team_by_priority or self.chosen_config.choose_team_by_priority)
-        self.predefined_team_opt.setDisabled(value)
+        self.predefined_team_opt.setDisabled(value or self.chosen_config.choose_team_by_priority)
         self.priority_team_opt.setDisabled(value)
         self.team_info_card.setEnabled(value)
 

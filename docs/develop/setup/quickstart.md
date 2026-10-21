@@ -58,6 +58,8 @@ uv run src/zzz_lv/gui/app.py
 $env:PYTHONPATH = "src"; uv run src/zzz_lv/gui/app.py
 ```
 
+不是管理员权限时会先弹出 UAC 申请提权，确认后在新窗口中启动（游戏以管理员权限运行，普通权限的点击会被系统拦截）。IDE 里调试需要以管理员身份运行 IDE，否则提权后的新进程不在调试器下。
+
 **主窗口弹出 = ① 完成。** app 本身不读任何环境变量。
 
 > ① 完成即可开发、可跑 GUI。下面按需继续。

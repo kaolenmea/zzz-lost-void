@@ -1,5 +1,7 @@
+import ctypes
 import datetime
 import os
+import subprocess
 import sys
 from functools import lru_cache
 from pathlib import Path
@@ -93,6 +95,41 @@ def get_work_dir() -> str:
     if run_in_exe():
         return str(Path(sys.executable).resolve().parent)
     return str(Path(__file__).resolve().parents[3])
+
+
+def is_admin() -> bool:
+    """
+    当前进程是否有管理员权限
+    :return:
+    """
+    return bool(ctypes.windll.shell32.IsUserAnAdmin())
+
+
+def ensure_admin() -> None:
+    """
+    没有管理员权限时 申请提权重新启动当前脚本 并退出当前进程
+    游戏以管理员权限运行 普通权限进程发出的鼠标键盘输入会被系统静默拦截
+    """
+    if is_admin():
+        return
+
+    # 提权后的进程不继承环境变量 需要把 PYTHONPATH 带过去
+    pythonpath = [os.path.abspath(p) for p in os.environ.get('PYTHONPATH', '').split(os.pathsep) if p]
+    argv = [os.path.abspath(sys.argv[0])] + sys.argv[1:]
+    boot = (
+        'import os, runpy, sys; '
+        f"os.environ['PYTHONPATH'] = {os.pathsep.join(pythonpath)!r}; "
+        f'sys.path[0:0] = {pythonpath!r}; '
+        f'sys.argv = {argv!r}; '
+        f"runpy.run_path({argv[0]!r}, run_name='__main__')"
+    )
+    params = subprocess.list2cmdline(['-c', boot])
+    # 返回值大于 32 表示成功 用户在 UAC 弹窗点「否」时会失败
+    result = ctypes.windll.shell32.ShellExecuteW(None, 'runas', sys.executable, params, get_work_dir(), 1)
+    if result <= 32:
+        print('需要管理员权限才能操作游戏 已取消启动', file=sys.stderr)
+        sys.exit(1)
+    sys.exit(0)
 
 
 def get_env(key: str) -> str | None:

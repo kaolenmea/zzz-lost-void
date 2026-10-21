@@ -1,35 +1,19 @@
 from qfluentwidgets import FluentIcon
 
-from one_dragon_qt.view.app_run_interface import AppRunInterface
 from one_dragon_qt.widgets.pivot_navi_interface import PivotNavigatorInterface
-from zzz_lv.application.hollow_zero.lost_void import lost_void_const
 from zzz_lv.context.zzz_context import ZContext
 from zzz_lv.gui.view.hollow_zero.lost_void_challenge_config_interface import (
     LostVoidChallengeConfigInterface,
 )
-from zzz_lv.gui.view.hollow_zero.lost_void_setting_interface import (
-    LostVoidSettingInterface,
+from zzz_lv.gui.view.hollow_zero.lost_void_run_interface import LostVoidRunInterface
+from zzz_lv.gui.view.hollow_zero.predefined_team_interface import (
+    PredefinedTeamInterface,
 )
-from zzz_lv.gui.view.one_dragon.predefined_team_interface import PredefinedTeamInterface
-
-
-class LostVoidRunInterface(AppRunInterface):
-
-    def __init__(self, ctx: ZContext, parent=None) -> None:
-        self.ctx: ZContext = ctx
-        AppRunInterface.__init__(
-            self,
-            ctx=ctx,
-            app_id=lost_void_const.APP_ID,
-            object_name='lost_void_run_interface',
-            nav_text_cn='运行',
-            parent=parent,
-        )
 
 
 class LostVoidInterface(PivotNavigatorInterface):
     """
-    迷失之地主界面 集中放运行、配置、挑战配置和预备编队
+    迷失之地主界面 集中放运行（含常用配置）、挑战配置和预备编队
     """
 
     def __init__(self, ctx: ZContext, parent=None) -> None:
@@ -43,7 +27,14 @@ class LostVoidInterface(PivotNavigatorInterface):
         )
 
     def create_sub_interface(self) -> None:
-        self.add_sub_interface(LostVoidRunInterface(self.ctx))
-        self.add_sub_interface(LostVoidSettingInterface(self.ctx))
+        self.run_interface: LostVoidRunInterface = LostVoidRunInterface(self.ctx)
+        self.add_sub_interface(self.run_interface)
         self.add_sub_interface(LostVoidChallengeConfigInterface(self.ctx))
         self.add_sub_interface(PredefinedTeamInterface(self.ctx))
+
+    def start_running(self) -> None:
+        """
+        切到运行页并开始运行 给主页的开始按钮使用
+        """
+        self.stacked_widget.setCurrentWidget(self.run_interface)
+        self.run_interface.run_app()

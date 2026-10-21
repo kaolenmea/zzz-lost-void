@@ -36,8 +36,15 @@ def check_pre_flight(ctx: ZContext) -> list[tuple[str, str, str | None]]:
 
     if not ctx.game_account_config.game_path:
         issues.append((
-            '未设置游戏路径 - 请在「账户管理 → 多账户管理 → 当前账户设置」中配置',
-            'app_accounts_interface',
+            '未设置游戏路径 - 无法自动启动游戏，请在「设置 → 游戏设置」中配置',
+            'app_setting_interface',
+            'setting_game_interface',
+        ))
+
+    if not yolo_config_utils.is_model_existed('lost_void_det', ctx.model_config.lost_void_det):
+        issues.append((
+            '迷失之地识别模型未下载 - 请在「资源管理」中下载',
+            'resource_management_interface',
             None,
         ))
 

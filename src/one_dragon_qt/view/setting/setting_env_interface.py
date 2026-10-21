@@ -2,16 +2,12 @@ from PySide6.QtGui import Qt
 from PySide6.QtWidgets import QWidget
 from qfluentwidgets import (
     FluentIcon,
-    HyperlinkButton,
-    InfoBar,
-    InfoBarPosition,
-    PushButton,
     SettingCardGroup,
     VBoxLayout,
 )
 
 from one_dragon.base.operation.one_dragon_context import OneDragonContext
-from one_dragon.envs.env_config import ProxyTypeEnum, ScreenshotMethodEnum
+from one_dragon.envs.env_config import ScreenshotMethodEnum
 from one_dragon.utils.i18_utils import gt
 from one_dragon_qt.widgets.setting_card.combo_box_setting_card import (
     ComboBoxSettingCard,
@@ -19,11 +15,13 @@ from one_dragon_qt.widgets.setting_card.combo_box_setting_card import (
 from one_dragon_qt.widgets.setting_card.help_card import HelpCard
 from one_dragon_qt.widgets.setting_card.key_setting_card import KeySettingCard
 from one_dragon_qt.widgets.setting_card.switch_setting_card import SwitchSettingCard
-from one_dragon_qt.widgets.setting_card.text_setting_card import TextSettingCard
 from one_dragon_qt.widgets.vertical_scroll_interface import VerticalScrollInterface
 
 
 class SettingEnvInterface(VerticalScrollInterface):
+    """
+    脚本环境设置 网络代理统一在「资源管理」页设置
+    """
 
     def __init__(self, ctx: OneDragonContext, parent=None):
         self.ctx: OneDragonContext = ctx
@@ -43,11 +41,10 @@ class SettingEnvInterface(VerticalScrollInterface):
 
         self.help_opt = HelpCard(
             title='设置说明',
-            content='不清楚用途时建议保持默认，下载失败或无法截图时再按说明调整',
+            content='不清楚用途时建议保持默认，无法截图时再调整截图方法；下载代理在「资源管理」中设置',
         )
         content_layout.addWidget(self.help_opt)
         content_layout.addWidget(self._init_basic_group())
-        content_layout.addWidget(self._init_web_group())
         content_layout.addWidget(self._init_key_group())
 
         return content_widget
@@ -83,44 +80,6 @@ class SettingEnvInterface(VerticalScrollInterface):
         basic_group.addSettingCard(self.copy_screenshot_opt)
 
         return basic_group
-
-    def _init_web_group(self) -> SettingCardGroup:
-        web_group = SettingCardGroup(gt('网络相关'))
-
-        self.proxy_type_opt = ComboBoxSettingCard(
-            icon=FluentIcon.GLOBE, title='网络代理', content='免费代理仅能加速工具和模型下载，无法加速代码同步',
-            options_enum=ProxyTypeEnum
-        )
-        self.proxy_type_opt.value_changed.connect(self._on_proxy_type_changed)
-        web_group.addSettingCard(self.proxy_type_opt)
-
-        self.personal_proxy_input = TextSettingCard(
-            icon=FluentIcon.WIFI, title='个人代理',
-            input_placeholder='http://127.0.0.1:7890'
-        )
-        self.personal_proxy_input.value_changed.connect(lambda: self._on_proxy_changed())
-        web_group.addSettingCard(self.personal_proxy_input)
-
-        self.gh_proxy_url_opt = TextSettingCard(
-            icon=FluentIcon.GLOBE, title='免费代理'
-        )
-        web_group.addSettingCard(self.gh_proxy_url_opt)
-
-        self.auto_fetch_gh_proxy_url_opt = SwitchSettingCard(
-            icon=FluentIcon.SYNC, title='自动获取免费代理地址', content='获取失败时 可前往 https://ghproxy.link/ 查看自行更新'
-        )
-        self.fetch_gh_proxy_url_btn = PushButton(gt('获取'), self)
-        self.fetch_gh_proxy_url_btn.clicked.connect(self.on_fetch_gh_proxy_url_clicked)
-        self.auto_fetch_gh_proxy_url_opt.hBoxLayout.addWidget(self.fetch_gh_proxy_url_btn, 0, Qt.AlignmentFlag.AlignRight)
-        self.auto_fetch_gh_proxy_url_opt.hBoxLayout.addSpacing(16)
-
-        self.goto_gh_proxy_link_btn = HyperlinkButton('https://ghproxy.link', gt('前往'), self)
-        self.auto_fetch_gh_proxy_url_opt.hBoxLayout.addWidget(self.goto_gh_proxy_link_btn, 0, Qt.AlignmentFlag.AlignRight)
-        self.auto_fetch_gh_proxy_url_opt.hBoxLayout.addSpacing(16)
-
-        web_group.addSettingCard(self.auto_fetch_gh_proxy_url_opt)
-
-        return web_group
 
     def _init_key_group(self) -> SettingCardGroup:
         key_group = SettingCardGroup(gt('脚本按键'))
@@ -159,71 +118,24 @@ class SettingEnvInterface(VerticalScrollInterface):
         self.developer_mode_opt.init_with_adapter(
             self.ctx.env_config.get_prop_adapter('developer_mode')
         )
-        self.debug_opt.setVisible(self.ctx.env_config.developer_mode)
         self.copy_screenshot_opt.init_with_adapter(self.ctx.env_config.get_prop_adapter('copy_screenshot'))
 
         self.key_start_running_input.init_with_adapter(self.ctx.env_config.get_prop_adapter('key_start_running'))
         self.key_stop_running_input.init_with_adapter(self.ctx.env_config.get_prop_adapter('key_stop_running'))
         self.key_screenshot_input.init_with_adapter(self.ctx.env_config.get_prop_adapter('key_screenshot'))
         self.key_debug_input.init_with_adapter(self.ctx.env_config.get_prop_adapter('key_debug'))
-
-
-        self.proxy_type_opt.init_with_adapter(self.ctx.env_config.get_prop_adapter('proxy_type'))
-        self.personal_proxy_input.init_with_adapter(self.ctx.env_config.get_prop_adapter('personal_proxy'))
-        self.gh_proxy_url_opt.init_with_adapter(self.ctx.env_config.get_prop_adapter('gh_proxy_url'))
-        self.auto_fetch_gh_proxy_url_opt.init_with_adapter(
-            self.ctx.env_config.get_prop_adapter('auto_fetch_gh_proxy_url')
-        )
-        self.update_proxy_ui()
+        self._apply_developer_visibility(self.ctx.env_config.developer_mode)
 
     def _on_developer_mode_changed(self, value: bool) -> None:
         """通知主窗口更新开发者功能可见性。"""
         window = self.window()
         if hasattr(window, 'set_developer_mode'):
             window.set_developer_mode(value)
-        self.debug_opt.setVisible(value)
+        self._apply_developer_visibility(value)
 
-    def _on_proxy_type_changed(self, index: int, value: str) -> None:
-        self.update_proxy_ui()
-        self._on_proxy_changed()
-
-    def _on_proxy_changed(self) -> None:
-        """
-        代理发生改变
-        :return:
-        """
-        self.ctx.env_config.init_system_proxy()
-
-    def on_fetch_gh_proxy_url_clicked(self) -> None:
-        self.ctx.gh_proxy_service.update_proxy_url()
-        self.gh_proxy_url_opt.init_with_adapter(self.ctx.env_config.get_prop_adapter('gh_proxy_url'))
-
-    def _show_info_bar(self, title: str, content: str, duration: int = 20000):
-        """显示信息条"""
-        InfoBar.success(
-            title=title,
-            content=content,
-            orient=Qt.Orientation.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP_RIGHT,
-            duration=duration,
-            parent=self,
-        ).setCustomBackgroundColor("white", "#202020")
-
-    def update_proxy_ui(self) -> None:
-        """
-        更新代理设置的UI
-        :return:
-        """
-        if self.ctx.env_config.proxy_type == ProxyTypeEnum.GHPROXY.value.value:
-            self.personal_proxy_input.hide()
-            self.gh_proxy_url_opt.show()
-            self.auto_fetch_gh_proxy_url_opt.show()
-        elif self.ctx.env_config.proxy_type == ProxyTypeEnum.PERSONAL.value.value:
-            self.personal_proxy_input.show()
-            self.gh_proxy_url_opt.hide()
-            self.auto_fetch_gh_proxy_url_opt.hide()
-        elif self.ctx.env_config.proxy_type == ProxyTypeEnum.NONE.value.value:
-            self.personal_proxy_input.hide()
-            self.gh_proxy_url_opt.hide()
-            self.auto_fetch_gh_proxy_url_opt.hide()
+    def _apply_developer_visibility(self, developer_mode: bool) -> None:
+        """调试模式、截图相关、调试键只在开发者模式下显示"""
+        self.debug_opt.setVisible(developer_mode)
+        self.key_screenshot_input.setVisible(developer_mode)
+        self.key_debug_input.setVisible(developer_mode)
+        self.copy_screenshot_opt.setVisible(developer_mode)
