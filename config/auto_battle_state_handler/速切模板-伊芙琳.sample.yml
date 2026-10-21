@@ -1,0 +1,60 @@
+template_name: "速切模板-伊芙琳"
+handlers:
+  - states: "[前台-伊芙琳]"
+    interrupt_states: "[前台-能量, 0, 0.1] & ![前台-伊芙琳]"
+    sub_handlers:
+      - states: "[自定义-终结技被强制释放, 0, 1]"
+        operations:
+          - operation_template: "伊芙琳-终结技"
+
+      - states: "[自定义-黄光切人, 0, 1]"
+        operations:
+          - operation_template: "伊芙琳-支援攻击"
+
+      - states: "[自定义-红光闪避, 0, 1]"
+        operations:
+          - operation_template: "伊芙琳-闪A"
+
+      - states: "[自定义-连携换人, 0, 0.5]"
+        operations:
+          - operation_template: "伊芙琳-连携攻击"
+
+      # 防呆
+      - states: "([按键-切换角色-下一个, 0, 0.3]|[按键-切换角色-上一个, 0, 0.3])"
+        debug_name: "切人后等待"
+        sub_handlers:
+          - states: "[自定义-快速支援换人, 0, 0.5]"
+            operations:
+              - op_name: "设置状态"
+                state: "自定义-伊芙琳-缠绕禁制"
+              - op_name: "等待秒数"
+                seconds: 1.0
+          - states: ""
+            operations:
+              - op_name: "等待秒数"
+                seconds: 0.3
+
+      - states: "[伊芙琳-终结技可用]"
+        operations:
+          - operation_template: "伊芙琳-终结技"
+
+      - states: "[自定义-伊芙琳-准备合轴]"
+        operations:
+          - op_name: "清除状态"
+            state: "自定义-伊芙琳-准备合轴"
+          - op_name: "设置状态"
+            state: "自定义-合轴时间"
+
+      - states: "[伊芙琳-燎索点]{3, 3}"
+        debug_name: "点数够了准备合轴"
+        interrupt_states: "![伊芙琳-燎索点]{3, 3}"
+        operations:
+          - op_name: "设置状态"
+            state: "自定义-伊芙琳-准备合轴"
+          - operation_template: "伊芙琳-无脑EA"
+
+      - states: ""
+        debug_name: "点数不够先打打"
+        interrupt_states: "[伊芙琳-燎索点]{3, 3}"
+        operations:
+          - operation_template: "伊芙琳-无脑EA"

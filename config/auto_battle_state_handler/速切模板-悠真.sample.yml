@@ -1,0 +1,108 @@
+template_name: "速切模板-悠真"
+handlers:
+  - states: "[前台-悠真]"
+    interrupt_states: "[前台-能量, 0, 0.1] & ![前台-悠真]"
+    sub_handlers:
+      - states: "[自定义-终结技被强制释放, 0, 1]"
+        operations:
+          - operation_template: "悠真-终结技"
+
+      - states: "[自定义-黄光切人, 0, 1]"
+        operations:
+          - operation_template: "通用-支援攻击"
+
+      - states: "[自定义-红光闪避, 0, 1]"
+        operations:
+          - operation_template: "通用-闪A"
+
+      - states: "[自定义-连携换人, 0, 0.5]"
+        operations:
+          - operation_template: "悠真-连携攻击"
+
+      # 防呆
+      - states: "([按键-切换角色-下一个, 0, 0.3]|[按键-切换角色-上一个, 0, 0.3])"
+        debug_name: "切人后等待"
+        sub_handlers:
+          - states: "[自定义-快速支援换人, 0, 0.5]"
+            operations:
+              - op_name: "等待秒数"
+                seconds: 1.0
+          - states: ""
+            operations:
+              - op_name: "等待秒数"
+                seconds: 0.3
+
+      # 失衡时刻
+      - states: "[自定义-失衡时间, 0, 10]"
+        sub_handlers:
+          # 离场
+          - states: "[自定义-失衡时间, 9, 10]"
+            debug_name: "失衡快结束"
+            operations:
+              - operation_template: "悠真-连携普攻产电壶"  # 连携奖励电壶别浪费了
+              - op_name: "设置状态"
+                state: "自定义-合轴时间"
+
+          # 连邂后第一套技能
+          - states: "[自定义-失衡时间, 0, 3] | [自定义-连携跳过, 0, 2]"  # 清空掉异常打出的电壶
+            debug_name: "失衡期操作"
+            sub_handlers:
+              - states: "[悠真-终结技可用]"
+                operations:
+                  - operation_template: "悠真-终结技"  # 上一轮的电壶
+                  - operation_template: "悠真-射箭四刀"  # 清空连携电壶
+                  - operation_template: "悠真-连携普攻产电壶"  # 连携奖励电壶别浪费了
+                  - operation_template: "悠真-射箭四刀"  # 清空连携电壶
+
+              - states: "![悠真-终结技可用]"
+                operations:
+                  - operation_template: "悠真-射箭四刀"
+                  - operation_template: "悠真-连携普攻产电壶"  # 连携奖励电壶别浪费了
+                  - operation_template: "悠真-射箭四刀"  # 清空连携电壶
+
+          - states: "[自定义-失衡时间, 3, 10]"
+            debug_name: "失衡期"
+            sub_handlers:
+              # 妮可来一发谢谢
+              - states: "([妮可-特殊技可用] | [妮可-终结技可用]) & [悠真-特殊技可用] &![自定义-妮可-能量场, -15, 3.5]"
+                debug_name: "妮可能量场已过"
+                operations:
+                  - operation_template: "悠真-强化特殊技合轴"  # 清空上一轮电壶
+
+              # 从妮可那回来了
+              - states: "[自定义-快速支援换人, 0, 2]"
+                sub_handlers:
+                  - states: "[悠真-终结技可用]"
+                    operations:
+                      - operation_template: "悠真-终结技"
+                      - operation_template: "悠真-射箭四刀"  # 清空连携电壶
+                  - states: "![悠真-终结技可用]"
+                    operations:
+                      - operation_template: "悠真-射箭四刀"  # 清空连携电壶
+
+              - states: "[悠真-终结技可用]"
+                sub_handlers:
+                  - states: "[悠真-特殊技可用]"
+                    operations:
+                      - operation_template: "悠真-强化特殊技"
+                      - operation_template: "悠真-终结技"
+                      - operation_template: "悠真-射箭四刀"  # 清空连携电壶
+
+              - states: "[悠真-特殊技可用]"
+                operations:
+                  - operation_template: "悠真-强化特殊技速接普攻"
+
+              - states: "![悠真-特殊技可用]"
+                operations:
+                  - operation_template: "悠真-连携普攻产电壶"  # 连携奖励电壶别浪费了
+                  - op_name: "设置状态"
+                    state: "自定义-合轴时间"
+
+      - states: "[悠真-特殊技可用]"
+        operations:
+          - operation_template: "悠真-强化特殊技速接普攻"
+
+      - states: ""
+        debug_name: "无脑EA"
+        operations:
+          - operation_template: "悠真-自动EA"

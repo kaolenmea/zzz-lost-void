@@ -1,0 +1,228 @@
+import datetime
+import os
+import sys
+from functools import lru_cache
+from pathlib import Path
+
+_work_dir: Path | None = None
+
+
+def join_dir_path_with_mk(path: str, *subs) -> str:
+    """
+    拼接目录路径和子目录
+    如果拼接后的目录不存在 则创建
+    :param path: 目录路径
+    :param subs: 子目录路径 可以传入多个表示多级
+    :return: 拼接后的子目录路径
+    """
+    target_path = path
+    for sub in subs:
+        if sub is None:
+            continue
+        target_path = os.path.join(target_path, sub)
+        if not os.path.exists(target_path):
+            os.mkdir(target_path)
+    return target_path
+
+
+def get_path_under_work_dir(*sub_paths: str) -> str:
+    """
+    获取当前工作目录下的子目录路径
+    :param sub_paths: 子目录路径 可以传入多个表示多级
+    :return: 拼接后的子目录路径
+    """
+    return join_dir_path_with_mk(get_work_dir(), *sub_paths)
+
+
+def get_resource_path(
+        *sub_paths: str,
+        prefer_bundled: bool = False,
+) -> str:
+    """获取资源文件路径。
+
+    默认优先查找工作目录下的路径，不存在时回退到 PyInstaller _MEIPASS。
+    ``prefer_bundled`` 开启时交换两者的优先级。
+    """
+    work_path = os.path.join(get_work_dir(), *sub_paths)
+    runtime_dir = getattr(sys, '_MEIPASS', None)
+    bundled_path = (
+        os.path.join(runtime_dir, 'resources', *sub_paths)
+        if runtime_dir is not None
+        else None
+    )
+
+    if prefer_bundled and bundled_path is not None and os.path.exists(bundled_path):
+        return bundled_path
+    if os.path.exists(work_path):
+        return work_path
+    if bundled_path is not None and os.path.exists(bundled_path):
+        return bundled_path
+    return work_path
+
+
+@lru_cache
+def run_in_exe() -> bool:
+    """
+    当前是否在exe中运行
+    :return:
+    """
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+
+
+def set_work_dir(work_dir: str | Path | None) -> None:
+    """显式设置项目工作目录。
+
+    Args:
+        work_dir: 项目工作目录。传入 ``None`` 时恢复默认目录判定。
+    """
+    global _work_dir
+    _work_dir = None if work_dir is None else Path(work_dir).resolve()
+
+
+def get_work_dir() -> str:
+    """返回稳定的项目工作目录。
+
+    显式设置的目录优先；冻结运行时默认使用可执行文件所在目录，
+    源码运行时根据当前文件位置推导项目根目录。
+
+    Returns:
+        项目工作目录。
+    """
+    if _work_dir is not None:
+        return str(_work_dir)
+    if run_in_exe():
+        return str(Path(sys.executable).resolve().parent)
+    return str(Path(__file__).resolve().parents[3])
+
+
+def get_env(key: str) -> str | None:
+    """
+    获取环境变量
+    :param key: key
+    :return: value
+    """
+    return os.environ.get(key)
+
+
+def get_env_def(key: str, dft: str) -> str:
+    """
+    获取环境变量 获取不到时使用默认值
+    :param key: key
+    :param dft: 默认值
+    :return: value
+    """
+    val = get_env(key)
+    return val if val is not None else dft
+
+
+def now_timestamp_str() -> str:
+    """
+    返回当前时间字符串
+    :return: 例如 20230915220515
+    """
+    current_time = datetime.datetime.now()
+    return current_time.strftime("%Y%m%d%H%M%S")
+
+
+def get_dt(utc_offset: int | None = None) -> str:
+    """
+    返回给定UTC偏移下当前日期字符串
+    默认返回本机时间所对应的日期
+    :param utc_offset: 时区与UTC之间的偏移
+    :return: 例如 20230915
+    """
+    timezone = None
+    if utc_offset is not None:
+        timezone = datetime.timezone(datetime.timedelta(hours=utc_offset))
+    current_time = datetime.datetime.now(tz=timezone)
+    return current_time.strftime("%Y%m%d")
+
+
+def add_dt_offset(dt: str, day_offset: int | None = None) -> str:
+    """
+    根据一个日期，获取对应星期天的日期
+    :param dt: 日期 yyyyMMdd 格式
+    :param day_offset: 天偏移量
+    :return: 星期天日期 yyyyMMdd 格式
+    """
+    date = datetime.datetime.strptime(dt, "%Y%m%d")
+    if day_offset is not None:
+        date = date + datetime.timedelta(days=day_offset)
+    return date.strftime("%Y%m%d")
+
+
+def get_sunday_dt(dt: str) -> str:
+    """
+    根据一个日期，获取对应星期天的日期
+    :param dt: 日期 yyyyMMdd 格式
+    :return: 星期天日期 yyyyMMdd 格式
+    """
+    date = datetime.datetime.strptime(dt, "%Y%m%d")
+    weekday = date.weekday()  # 0表示星期一，6表示星期天
+    days_to_sunday = 6 - weekday
+    sunday_date = date + datetime.timedelta(days=days_to_sunday)
+    return sunday_date.strftime("%Y%m%d")
+
+
+def get_monday_dt(dt: str) -> str:
+    """
+    根据一个日期，获取对应星期一的日期
+    :param dt: 日期 yyyyMMdd 格式
+    :return: 星期天日期 yyyyMMdd 格式
+    """
+    date = datetime.datetime.strptime(dt, "%Y%m%d")
+    weekday = date.weekday()  # 0表示星期一，6表示星期天
+    sunday_date = date + datetime.timedelta(days=-weekday)
+    return sunday_date.strftime("%Y%m%d")
+
+
+def is_monday(dt: str) -> bool:
+    """
+    是否星期一
+    :param dt:
+    :return:
+    """
+    date = datetime.datetime.strptime(dt, "%Y%m%d")
+    weekday = date.weekday()  # 0表示星期一，6表示星期天
+    return weekday == 0
+
+
+def get_current_day_of_week(utc_offset: int | None = None) -> int:
+    """
+    获取当前星期几 1~7
+    :return:
+    """
+    dt = get_dt(utc_offset)
+    date = datetime.datetime.strptime(dt, "%Y%m%d")
+    return date.weekday() + 1
+
+
+def dt_day_diff(dt_1: str, dt_2: str) -> int:
+    """
+    计算两个dt之间相差多少天
+    :param dt_1: 被减数
+    :param dt_2: 减数
+    :return:
+    """
+    date1 = datetime.datetime.strptime(dt_1, "%Y%m%d")
+    date2 = datetime.datetime.strptime(dt_2, "%Y%m%d")
+    diff = date1 - date2
+    return diff.days
+
+
+def clear_outdated_debug_files(days: int = 1):
+    """
+    清理过期的调试临时文件
+    :return:
+    """
+    directory = get_path_under_work_dir('.debug')
+    now = datetime.datetime.now()
+    cutoff = now - datetime.timedelta(days=days)
+
+    for root, _dirs, files in os.walk(directory):
+        for file in files:
+            path = os.path.join(root, file)
+            stat = os.stat(path)
+            modified_time = datetime.datetime.fromtimestamp(stat.st_mtime)
+            if modified_time < cutoff:
+                os.remove(path)

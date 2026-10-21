@@ -1,0 +1,145 @@
+from typing import Any
+
+import cv2
+from cv2.typing import MatLike
+
+from one_dragon.base.geometry.rectangle import Rect
+from one_dragon.base.screen.screen_area import ScreenArea
+
+
+class ScreenInfo:
+
+    def __init__(self, data: dict[str, Any]):
+        self.old_screen_id: str = data.get('screen_id', '')  # 旧的画面ID 用于保存时删掉旧文件
+        self.screen_id: str = data.get('screen_id', '')  # 画面ID 用于加载文件
+        self.screen_name: str = data.get('screen_name', '')  # 画面名称 用于显示
+        self.app_id: str = data.get('app_id', '')  # 所属应用ID 空字符串表示全局 screen
+
+        self.screen_image: MatLike | None = None
+
+        self.pc_alt: bool = data.get('pc_alt', False)  # PC端点击是否需要使用ALT键
+        self.area_list: list[ScreenArea] = []  # 画面中包含的区域
+
+        data_area_list = data.get('area_list', [])
+        for data_area in data_area_list:
+            pc_rect = data_area.get('pc_rect')
+            area = ScreenArea(
+                area_name=data_area.get('area_name', ''),
+                area_type=data_area.get('area_type'),
+                pc_rect=Rect(pc_rect[0], pc_rect[1], pc_rect[2], pc_rect[3]),
+                text=data_area.get('text', ''),
+                lcs_percent=(
+                    data_area.get('lcs_percent')
+                    if data_area.get('lcs_percent') is not None
+                    else 0.5
+                ),
+                template_id=data_area.get('template_id', ''),
+                template_sub_dir=data_area.get('template_sub_dir', ''),
+                template_match_threshold=(
+                    data_area.get('template_match_threshold')
+                    if data_area.get('template_match_threshold') is not None
+                    else 0.7
+                ),
+                color_range=data_area.get('color_range'),
+                pc_alt=self.pc_alt,
+                id_mark=data_area.get('id_mark', False),
+                goto_list=data_area.get('goto_list', []),
+                gamepad_key=data_area.get('gamepad_key', None),
+            )
+            self.area_list.append(area)
+
+    def get_image_to_show(self, highlight_area_idx: int | None = None) -> MatLike:
+        """
+        用于显示的图片
+        :param highlight_area_idx: 高亮区域索引
+        :return:
+        """
+        if self.screen_image is None:
+            return None
+
+        image = self.screen_image.copy()
+        for idx, area in enumerate(self.area_list):
+            if highlight_area_idx is not None and idx == highlight_area_idx:
+                color = (0, 0, 255)
+                thickness = 4
+            else:
+                color = (255, 0, 0)
+                thickness = 2
+
+            # 将框绘制在区域外侧，避免遮挡内容
+            # 通过调整坐标，让框的边缘位于区域外部
+            half_thickness = thickness // 2
+            outer_x1 = area.pc_rect.x1 - half_thickness
+            outer_y1 = area.pc_rect.y1 - half_thickness
+            outer_x2 = area.pc_rect.x2 + half_thickness
+            outer_y2 = area.pc_rect.y2 + half_thickness
+
+            # 确保调整后的坐标在图像范围内
+            img_height, img_width = image.shape[:2]
+            outer_x1 = max(0, outer_x1)
+            outer_y1 = max(0, outer_y1)
+            outer_x2 = min(img_width - 1, outer_x2)
+            outer_y2 = min(img_height - 1, outer_y2)
+
+            if outer_x2 > outer_x1 and outer_y2 > outer_y1:
+                cv2.rectangle(image,
+                              (outer_x1, outer_y1),
+                              (outer_x2, outer_y2),
+                              color, thickness)
+
+        return image
+
+    def remove_area_by_idx(self, idx: int) -> None:
+        """
+        删除某行数据
+        :param idx:
+        :return:
+        """
+        if self.area_list is None:
+            return
+        length = len(self.area_list)
+        if idx < 0 or idx >= length:
+            return
+        self.area_list.pop(idx)
+
+    def upsert_area(self, area: ScreenArea) -> str:
+        """按 area_name 插入或更新 area(存在则整体替换,否则追加)。
+
+        Args:
+            area: 要写入的区域;以 ``area_name`` 作为匹配键。
+
+        Returns:
+            ``'updated'`` 表示替换了既有同名 area;``'inserted'`` 表示新追加。
+        """
+        for idx, cur in enumerate(self.area_list):
+            if cur.area_name == area.area_name:
+                self.area_list[idx] = area
+                return 'updated'
+        self.area_list.append(area)
+        return 'inserted'
+
+    def remove_area_by_name(self, area_name: str) -> bool:
+        """按 area_name 删除 area。
+
+        Args:
+            area_name: 区域名(同 screen 内唯一)。
+
+        Returns:
+            找到并删除返 ``True``;不存在返 ``False``。
+        """
+        for idx, cur in enumerate(self.area_list):
+            if cur.area_name == area_name:
+                self.area_list.pop(idx)
+                return True
+        return False
+
+    def to_dict(self) -> dict[str, Any]:
+        data: dict[str, Any] = {}
+        data['screen_id'] = self.screen_id
+        data['screen_name'] = self.screen_name
+        if self.app_id:
+            data['app_id'] = self.app_id
+        data['pc_alt'] = self.pc_alt
+        data['area_list'] = [area.to_dict() for area in self.area_list]
+
+        return data

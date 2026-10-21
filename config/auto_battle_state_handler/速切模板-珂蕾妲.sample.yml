@@ -1,0 +1,56 @@
+template_name: "速切模板-珂蕾妲"
+handlers:
+  - states: "[前台-珂蕾妲]"
+    interrupt_states: "[前台-能量, 0, 0.1] & ![前台-珂蕾妲]"
+    sub_handlers:
+      - states: "[自定义-终结技被强制释放, 0, 1]"
+        operations:
+          - operation_template: "通用-终结技"
+
+      - states: "[自定义-黄光切人, 0, 1]"
+        operations:
+          - operation_template: "珂蕾妲-支援攻击"
+
+      - states: "[自定义-红光闪避, 0, 1]"
+        operations:
+          - operation_template: "通用-闪A"
+
+      - states: "[自定义-连携换人, 0, 0.5]"
+        operations:
+          - operation_template: "通用-连携攻击"
+          - op_name: "设置状态"
+            state: "自定义-珂蕾妲-升温"
+
+      - states: "([按键-切换角色-下一个, 0, 0.3]|[按键-切换角色-上一个, 0, 0.3])"
+        debug_name: "切人后等待"
+        sub_handlers:
+          - states: "[自定义-快速支援换人, 0, 0.3]"
+            operations:
+              - op_name: "等待秒数"
+                seconds: 0.5
+          - states: ""
+            operations:
+              - op_name: "等待秒数"
+                seconds: 0.3
+
+      - states: "[珂蕾妲-终结技可用] & ![自定义-失衡时间, -10, 10]"
+        operations:
+          - op_name: "设置状态"
+            state: "自定义-珂蕾妲-升温"
+          - operation_template: "通用-终结技"
+
+      # 别浪费时间咯
+      - states: "[珂蕾妲-特殊技可用]"
+        operations:
+          - operation_template: "珂蕾妲-特殊技合轴"
+
+      # 快乐合轴
+      - states: "[自定义-珂蕾妲-升温, 0, 8]"
+        operations:
+          - op_name: "清除状态"
+            state: "自定义-珂蕾妲-升温"
+          - operation_template: "珂蕾妲-强化普攻接特殊技合轴"
+
+      - states: "![自定义-珂蕾妲-升温, 0, 8]"
+        operations:
+          - operation_template: "通用-切人普通攻击"

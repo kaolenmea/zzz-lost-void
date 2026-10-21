@@ -1,0 +1,46 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, cast
+
+from one_dragon.base.operation.application import application_const
+from one_dragon.base.operation.application.application_config import ApplicationConfig
+from one_dragon.base.operation.application.application_factory import ApplicationFactory
+from one_dragon.base.operation.application_base import Application
+from one_dragon.base.operation.application_run_record import AppRunRecord
+from zzz_lv.application.hollow_zero.lost_void import lost_void_const
+from zzz_lv.application.hollow_zero.lost_void.lost_void_app import LostVoidApp
+from zzz_lv.application.hollow_zero.lost_void.lost_void_config import LostVoidConfig
+from zzz_lv.application.hollow_zero.lost_void.lost_void_run_record import (
+    LostVoidRunRecord,
+)
+
+if TYPE_CHECKING:
+    from zzz_lv.context.zzz_context import ZContext
+
+
+class LostVoidAppFactory(ApplicationFactory):
+
+    def __init__(self, ctx: ZContext):
+        ApplicationFactory.__init__(self, lost_void_const)
+        self.ctx: ZContext = ctx
+
+    def create_application(self, instance_idx: int, group_id: str) -> Application:
+        return LostVoidApp(self.ctx)
+
+    def create_config(
+        self, instance_idx: int, group_id: str
+    ) -> ApplicationConfig:
+        return LostVoidConfig(
+            instance_idx=instance_idx,
+            group_id=group_id,
+        )
+
+    def create_run_record(self, instance_idx: int) -> AppRunRecord:
+        return LostVoidRunRecord(
+            config=cast(LostVoidConfig, self.get_config(
+                instance_idx=instance_idx,
+                group_id=application_const.DEFAULT_GROUP_ID
+            )),
+            instance_idx=instance_idx,
+            game_refresh_hour_offset=self.ctx.game_account_config.game_refresh_hour_offset,
+        )

@@ -1,0 +1,44 @@
+from qfluentwidgets import FluentIcon
+
+from one_dragon_qt.view.devtools.devtools_image_analysis_interface import (
+    DevtoolsImageAnalysisInterface,
+)
+from one_dragon_qt.view.devtools.devtools_screen_manage_interface import (
+    DevtoolsScreenManageInterface,
+)
+from one_dragon_qt.view.devtools.devtools_template_helper_interface import (
+    DevtoolsTemplateHelperInterface,
+)
+from one_dragon_qt.widgets.pivot_navi_interface import PivotNavigatorInterface
+from zzz_lv.context.zzz_context import ZContext
+from zzz_lv.gui.view.devtools.agent_template_generator_interface import (
+    AgentTemplateGeneratorInterface,
+)
+from zzz_lv.gui.view.devtools.devtools_screenshot_helper_interface import (
+    DevtoolsScreenshotHelperInterface,
+)
+from zzz_lv.gui.view.devtools.mcp_service_interface import McpServiceInterface
+from zzz_lv.gui.view.devtools.operation_debug_interface import OperationDebugInterface
+
+
+class AppDevtoolsInterface(PivotNavigatorInterface):
+
+    def __init__(self,
+                 ctx: ZContext,
+                 parent=None):
+        self.ctx: ZContext = ctx
+        PivotNavigatorInterface.__init__(self, object_name='app_devtools_interface', parent=parent,
+                                         nav_text_cn='开发工具', nav_icon=FluentIcon.DEVELOPER_TOOLS)
+
+    def create_sub_interface(self):
+        """
+        创建下面的子页面
+        :return:
+        """
+        self.add_sub_interface(DevtoolsImageAnalysisInterface(self.ctx))
+        self.add_sub_interface(DevtoolsTemplateHelperInterface(self.ctx))
+        self.add_sub_interface(DevtoolsScreenManageInterface(self.ctx))
+        self.add_sub_interface(AgentTemplateGeneratorInterface(self.ctx))
+        self.add_sub_interface(DevtoolsScreenshotHelperInterface(self.ctx))
+        self.add_sub_interface(OperationDebugInterface(self.ctx))
+        self.add_sub_interface(McpServiceInterface(self.ctx))

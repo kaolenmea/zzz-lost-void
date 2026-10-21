@@ -1,0 +1,292 @@
+import csv
+import os
+import time
+
+import numpy as np
+from cv2.typing import MatLike
+
+from one_dragon.base.debug.debug_trace_bus import (
+    DebugTraceBus,
+    PerfTraceItem,
+    TimelineTraceItem,
+    VisionTraceItem,
+)
+from one_dragon.yolo import onnx_utils
+from one_dragon.yolo.detect_utils import (
+    DetectClass,
+    DetectContext,
+    DetectFrameResult,
+    DetectObjectResult,
+    multiclass_nms,
+    xywh2xyxy,
+)
+from one_dragon.yolo.onnx_model_loader import OnnxModelLoader
+
+
+class Yolov8Detector(OnnxModelLoader):
+
+    def __init__(self,
+                 model_name: str,
+                 model_parent_dir_path: str,
+                 model_download_url: str,
+                 gh_proxy: bool = True,
+                 gh_proxy_url: str | None = None,
+                 personal_proxy: str | None = None,
+                 gpu: bool = False,
+                 backup_model_name: str | None = None,
+                 keep_result_seconds: float = 2,
+                 debug_trace_bus: DebugTraceBus | None = None
+                 ) -> None:
+        """
+        yolov8 detect 导出 onnx 后使用
+        参考自 https://github.com/ibaiGorordo/ONNX-YOLOv8-Object-Detection
+        :param model_name: 模型名称 在根目录下会有一个以模型名称创建的子文件夹
+        :param backup_model_name: 备用模型名称 通常是上一个版本的模型 在新版本模型无法下载时兜底使用
+        :param model_parent_dir_path: 放置所有模型的根目录
+        :param gpu: 是否启用GPU运算
+        :param keep_result_seconds: 保留多长时间的识别结果
+        """
+        OnnxModelLoader.__init__(
+            self,
+            model_name=model_name,
+            model_parent_dir_path=model_parent_dir_path,
+            model_download_url=model_download_url,
+            gh_proxy=gh_proxy,
+            gh_proxy_url=gh_proxy_url,
+            personal_proxy=personal_proxy,
+            gpu=gpu,
+            backup_model_name=backup_model_name
+        )
+
+        self.keep_result_seconds: float = keep_result_seconds  # 保留识别结果的秒数
+        self.run_result_history: list[DetectFrameResult] = []  # 历史识别结果
+        self.debug_trace_bus: DebugTraceBus | None = debug_trace_bus
+
+        self.idx_2_class: dict[int, DetectClass] = {}  # 分类
+        self.class_2_idx: dict[str, int] = {}
+        self.category_2_idx: dict[str, list[int]] = {}
+        self._load_detect_classes(self.model_dir_path)
+
+    def run(
+        self,
+        image: MatLike,
+        conf: float = 0.6,
+        iou: float = 0.5,
+        run_time: float | None = None,
+        label_list: list[str] | None = None,
+        category_list: list[str] | None = None,
+    ) -> DetectFrameResult:
+        """
+        对图片进行识别
+
+        Args:
+            image: 图片 [h, w, c] rgb通道
+            conf: 置信度阈值
+            iou: iou阈值
+            run_time: 识别时间
+            label_list: 限定识别的标签
+            category_list: 限定识别的标签分类
+
+        Returns:
+            DetectFrameResult: 识别结果
+        """
+        t1 = time.time()
+        context = DetectContext(image, run_time)
+        context.conf = conf
+        context.iou = iou
+        context.label_list = label_list
+        context.category_list = category_list
+
+        input_tensor = self.prepare_input(context)
+        t2 = time.time()
+
+        outputs = self.inference(input_tensor)
+        t3 = time.time()
+
+        results = self.process_output(outputs, context)
+        t4 = time.time()
+
+        # log.info(f'识别完毕 得到结果 {len(results)}个。预处理耗时 {t2 - t1:.3f}s, 推理耗时 {t3 - t2:.3f}s, 后处理耗时 {t4 - t3:.3f}s')
+
+        frame_result = self.record_result(context, results)
+        self._emit_debug_vision(frame_result)
+        self._emit_debug_perf_and_timeline(
+            preprocess_ms=(t2 - t1) * 1000.0,
+            infer_ms=(t3 - t2) * 1000.0,
+            postprocess_ms=(t4 - t3) * 1000.0,
+            result_count=len(results),
+        )
+        return frame_result
+
+    def prepare_input(self, context: DetectContext) -> np.ndarray:
+        """
+        推理前的预处理
+        """
+        input_tensor, scale_height, scale_width = onnx_utils.scale_input_image_u(context.img, self.onnx_input_width, self.onnx_input_height)
+        context.scale_height = scale_height
+        context.scale_width = scale_width
+        return input_tensor
+
+    def inference(self, input_tensor: np.ndarray):
+        """
+        图片输入到模型中进行推理
+        :param input_tensor: 输入模型的图片 RGB通道
+        :return: onnx模型推理得到的结果
+        """
+        outputs = self.run_session(self.output_names, {self.input_names[0]: input_tensor})
+        return outputs
+
+    def process_output(self, output, context: DetectContext) -> list[DetectObjectResult]:
+        """
+        :param output: 推理结果
+        :param context: 上下文
+        :return: 最终得到的识别结果
+        """
+        predictions = np.squeeze(output[0]).T
+
+        keep = np.ones(shape=(predictions.shape[1]), dtype=bool)
+
+        if context.label_list is not None or context.category_list is not None:
+            keep[4:] = False  # 前4位是坐标 先把所有标签都设置为False
+            if context.label_list is not None:
+                for label in context.label_list:
+                    idx = self.class_2_idx.get(label)
+                    if idx is not None:
+                        keep[idx + 4] = True
+
+            if context.category_list is not None:
+                for category in context.category_list:
+                    for idx in self.category_2_idx.get(category, []):
+                        keep[idx + 4] = True
+
+        predictions[:, ~keep] = 0
+
+        # 按置信度阈值进行基本的过滤
+        scores = np.max(predictions[:, 4:], axis=1)
+        predictions = predictions[scores > context.conf, :]
+        scores = scores[scores > context.conf]
+
+        results: list[DetectObjectResult] = []
+        if len(scores) == 0:
+            return results
+
+        # 选择置信度最高的类别
+        class_ids = np.argmax(predictions[:, 4:], axis=1)
+
+        # 提取Bounding box
+        boxes = predictions[:, :4]  # 原始推理结果 xywh
+        scale_shape = np.array([context.scale_width, context.scale_height, context.scale_width, context.scale_height])  # 缩放后图片的大小
+        boxes = np.divide(boxes, scale_shape, dtype=np.float32)  # 转化到 0~1
+        boxes *= np.array([context.img_width, context.img_height, context.img_width, context.img_height])  # 恢复到原图的坐标
+        boxes = xywh2xyxy(boxes)  # 转化成 xyxy
+
+        # 进行NMS 获取最后的结果
+        indices = multiclass_nms(boxes, scores, class_ids, context.iou)
+
+        for idx in indices:
+            result = DetectObjectResult(rect=boxes[idx].tolist(),
+                                        score=float(scores[idx]),
+                                        detect_class=self.idx_2_class[int(class_ids[idx])]
+                                        )
+            results.append(result)
+
+        return results
+
+    def record_result(self, context: DetectContext, results: list[DetectObjectResult]) -> DetectFrameResult:
+        """
+        记录本帧识别结果
+        :param context: 识别上下文
+        :param results: 识别结果
+        :return: 组合结果
+        """
+        new_frame = DetectFrameResult(
+            raw_image=context.img,
+            results=results,
+            run_time=context.run_time
+        )
+        self.run_result_history.append(new_frame)
+        self.run_result_history = [i for i in self.run_result_history
+                                   if context.run_time - i.run_time <= self.keep_result_seconds]
+
+        return new_frame
+
+    def _emit_debug_vision(self, frame_result: DetectFrameResult) -> None:
+        bus = self.debug_trace_bus
+        if bus is None or not bus.enabled or frame_result is None:
+            return
+
+        for result in frame_result.results[:50]:
+            label = result.detect_class.class_name
+            if len(label) > 36:
+                label = label[:33] + "..."
+            bus.add_vision(
+                VisionTraceItem(
+                    source="yolo",
+                    label=label,
+                    x1=result.x1,
+                    y1=result.y1,
+                    x2=result.x2,
+                    y2=result.y2,
+                    score=result.score,
+                    meta={
+                        "class_id": result.detect_class.class_id,
+                        "category": result.detect_class.class_category or "",
+                    },
+                )
+            )
+
+    def _emit_debug_perf_and_timeline(
+        self,
+        preprocess_ms: float,
+        infer_ms: float,
+        postprocess_ms: float,
+        result_count: int,
+    ) -> None:
+        bus = self.debug_trace_bus
+        if bus is None or not bus.enabled:
+            return
+
+        total_ms = preprocess_ms + infer_ms + postprocess_ms
+        bus.add_perf(
+            PerfTraceItem(
+                metric="yolo_ms",
+                value=total_ms,
+                unit="ms",
+                meta={"result_count": result_count},
+            )
+        )
+        bus.add_timeline(
+            TimelineTraceItem(
+                category="vision",
+                title="yolo",
+                detail=f"{result_count} objects / {total_ms:.1f}ms",
+                level="DEBUG",
+            )
+        )
+
+    @property
+    def last_run_result(self) -> DetectFrameResult | None:
+        if len(self.run_result_history) > 0:
+            return self.run_result_history[len(self.run_result_history) - 1]
+        else:
+            return None
+
+    def _load_detect_classes(self, model_dir_path: str):
+        """
+        加载分类
+        :param model_dir_path: model_dir_path: str
+        :return:
+        """
+        csv_path = os.path.join(model_dir_path, 'labels.csv')
+        with open(csv_path, encoding='utf-8') as file:
+            csv_reader = csv.reader(file)
+            for row in csv_reader:
+                if row[0] == 'idx':
+                    continue
+                c = DetectClass(int(row[0]), row[1], category=None if len(row) < 3 else row[2])
+                self.idx_2_class[c.class_id] = c
+                self.class_2_idx[c.class_name] = c.class_id
+
+                if c.class_category not in self.category_2_idx:
+                    self.category_2_idx[c.class_category] = []
+                self.category_2_idx[c.class_category].append(c.class_id)

@@ -1,0 +1,94 @@
+name: Build Running Resources
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  set-timestamp:
+    uses: ./.github/workflows/common-set-timestamp.yml
+
+  build-running-resources:
+    needs: set-timestamp
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.head_ref || github.ref }}
+
+      - name: Install uv
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://astral.sh/uv/install.ps1 | Invoke-Expression
+
+      - name: Create and activate virtual environment
+        shell: pwsh
+        run: |
+          uv venv .venv --python=3.11.12
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\Activate.ps1
+          uv sync --group dev
+
+      - name: Build files
+        shell: pwsh
+        run: |
+          chcp 65001
+          $OutputEncoding = [System.Text.Encoding]::UTF8
+          [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          .\.venv\Scripts\Activate.ps1
+          uv run python src/one_dragon/devtools/compile_po.py
+          uv run python src/zzz_lv/auto_battle/build_utils.py
+        env:
+          PYTHONPATH: src
+
+      - name: Check for changes
+        id: changes
+        shell: pwsh
+        run: |
+          $trackedChanges = @(git diff --name-only --ignore-cr-at-eol -- config/auto_battle/ assets/text/output/)
+          $untrackedChanges = @(git ls-files --others --exclude-standard -- config/auto_battle/ assets/text/output/)
+          $changes = @($trackedChanges + $untrackedChanges) | Where-Object { $_ }
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "changed=$(([bool]$changes).ToString().ToLowerInvariant())"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "files<<EOF"
+          $changes | Add-Content -Path $env:GITHUB_OUTPUT
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "EOF"
+
+      - name: Push changes
+        if: (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && steps.changes.outputs.changed == 'true'
+        uses: actions-js/push@v1.5
+        with:
+          rebase: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.head_ref || github.ref_name }}
+          message: |
+            ci: 自动构建运行资源 ${{ needs.set-timestamp.outputs.build_timestamp }}
+
+            [skip ci]
+
+      - name: Check build artifacts (fork PR)
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        shell: pwsh
+        env:
+          CHANGED: ${{ steps.changes.outputs.changed }}
+          CHANGED_FILES: ${{ steps.changes.outputs.files }}
+        run: |
+          if ($env:CHANGED -eq 'true') {
+            Write-Host "::error::构建产物未提交，请在本地运行以下命令后提交："
+            Write-Host "::error::  uv run python src/one_dragon/devtools/compile_po.py"
+            Write-Host "::error::  uv run python src/zzz_lv/auto_battle/build_utils.py"
+            Write-Host "变更文件："
+            Write-Host $env:CHANGED_FILES
+            exit 1
+          }
+          Write-Host "构建产物已是最新"

@@ -1,0 +1,143 @@
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor, QFont
+from PySide6.QtWidgets import (
+    QApplication,
+    QHBoxLayout,
+    QListView,
+    QSizePolicy,
+    QStackedWidget,
+    QStyledItemDelegate,
+    QVBoxLayout,
+    QWidget,
+)
+from qfluentwidgets import ListItemDelegate, Pivot, qrouter, setFont
+from qfluentwidgets.common.animation import ScaleSlideAnimation
+from qfluentwidgets.components.navigation.pivot import PivotItem
+
+from one_dragon_qt.services.styles_manager import OdQtStyleSheet
+
+
+class PhosPivot(Pivot):
+
+    currentItemChanged = Signal(str)
+
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+        self.items = {}
+        self._currentRouteKey = None
+        self._indicatorLength = 16
+        self.lightIndicatorColor = QColor()
+        self.darkIndicatorColor = QColor()
+
+        self.hBoxLayout = QHBoxLayout(self)
+        self.slideAni = ScaleSlideAnimation(self)
+
+        OdQtStyleSheet.PIVOT.apply(self)
+
+        self.hBoxLayout.setSpacing(20)  # 设置统一间距，替代手动添加spacer
+        self.hBoxLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.hBoxLayout.setContentsMargins(0, 0, 0, 0)
+        self.hBoxLayout.setSizeConstraint(QHBoxLayout.SizeConstraint.SetMinimumSize)
+
+        self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        self.slideAni.valueChanged.connect(lambda: self.update())
+
+    def insertItem(self, index: int, routeKey: str, text: str, onClick=None, icon=None):
+        if routeKey in self.items:
+            return
+
+        item = PhosPivotItem(text, self)
+        if icon:
+            item.setIcon(icon)
+        font = QFont("Microsoft YaHei", 12)
+        font.setWeight(QFont.Weight.Bold)
+        font.setHintingPreference(QFont.HintingPreference.PreferFullHinting)
+        item.setFont(font)
+        self.insertWidget(index, routeKey, item, onClick)
+        return item
+
+    def insertWidget(self, index: int, routeKey: str, widget: PivotItem, onClick=None):
+        if routeKey in self.items:
+            return
+
+        widget.setProperty("routeKey", routeKey)
+        widget.itemClicked.connect(self._onItemClicked)
+        if onClick:
+            widget.itemClicked.connect(onClick)
+
+        existing_count = len(self.items)
+        self.items[routeKey] = widget
+
+        # 使用setSpacing统一管理间距，无需手动添加spacer
+        if index <= 0:
+            self.hBoxLayout.insertWidget(0, widget, 0)
+        elif index >= existing_count:
+            self.hBoxLayout.addWidget(widget, 0)
+        else:
+            self.hBoxLayout.insertWidget(index, widget, 0)
+
+
+class PhosPivotItem(PivotItem):
+    """Pivot item"""
+
+    itemClicked = Signal(bool)
+
+    def _postInit(self):
+        self.isSelected = False
+        self.setProperty("isSelected", False)
+        self.clicked.connect(lambda: self.itemClicked.emit(True))
+
+        OdQtStyleSheet.PIVOT.apply(self)
+        setFont(self, 18)
+
+    def setSelected(self, isSelected: bool):
+        if self.isSelected == isSelected:
+            return
+
+        self.isSelected = isSelected
+        self.setProperty("isSelected", isSelected)
+        self.setStyle(QApplication.style())
+        self.update()
+
+
+class CustomListItemDelegate(ListItemDelegate):
+    def __init__(self, parent: QListView):
+        super().__init__(parent)
+        self._styled_delegate = QStyledItemDelegate(self)
+
+    def paint(self, painter, option, index):
+        self._styled_delegate.paint(painter, option, index)
+
+
+class PivotNavigatorContainer(QWidget):
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+
+        self.pivot = Pivot(self)
+        self.stacked_widget = QStackedWidget(self)
+        self.v_box_layout = QVBoxLayout(self)
+
+        self.v_box_layout.addWidget(self.pivot, 0, Qt.AlignmentFlag.AlignLeft)
+        self.v_box_layout.addWidget(self.stacked_widget)
+        self.v_box_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.stacked_widget.currentChanged.connect(self.on_current_index_changed)
+
+    def add_sub_interface(self, widget: QWidget, text: str):
+        self.stacked_widget.addWidget(widget)
+        self.pivot.addItem(
+            routeKey=widget.objectName(),
+            text=text,
+            onClick=lambda: self.stacked_widget.setCurrentWidget(widget),
+        )
+
+        if self.stacked_widget.currentWidget() is None:
+            self.stacked_widget.setCurrentWidget(widget)
+        if self.pivot.currentItem() is None:
+            self.pivot.setCurrentItem(widget.objectName())
+
+    def on_current_index_changed(self, index):
+        widget = self.stacked_widget.widget(index)
+        self.pivot.setCurrentItem(widget.objectName())
+        qrouter.push(self.stacked_widget, widget.objectName())

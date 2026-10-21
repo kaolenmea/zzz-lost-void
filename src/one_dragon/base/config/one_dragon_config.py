@@ -1,0 +1,229 @@
+import os
+import shutil
+from enum import Enum
+
+from one_dragon.base.config.config_item import ConfigItem
+from one_dragon.base.config.game_account_config import GameAccountConfig
+from one_dragon.base.config.yaml_config import YamlConfig
+from one_dragon.utils import os_utils
+
+
+class RunInOneDragonApp(Enum):
+
+    RUN = ConfigItem('一条龙中运行', value=True)
+    DONT_RUN = ConfigItem('一条龙中不运行', value=False)
+
+
+class OneDragonInstance:
+
+    def __init__(self, idx: int, name: str, active: bool, active_in_od: bool, force_login_before_run: bool = False):
+        self.idx: int = idx
+        self.name: str = name
+        self.active: bool = active
+        self.active_in_od: bool = active_in_od
+        self.force_login_before_run: bool = force_login_before_run
+
+
+class AfterDoneOpEnum(Enum):
+
+    NONE = ConfigItem('无')
+    CLOSE_GAME = ConfigItem('关闭游戏')
+    SHUTDOWN = ConfigItem('关机')
+    HIBERNATE = ConfigItem('休眠')
+    SLEEP = ConfigItem('睡眠')
+
+
+class InstanceRun(Enum):
+
+    ALL = ConfigItem('全部实例')
+    CURRENT = ConfigItem('仅运行当前')
+
+
+class OneDragonConfig(YamlConfig):
+
+    def __init__(self):
+        YamlConfig.__init__(self, 'one_dragon')
+        self.instance_list: list[OneDragonInstance] = []
+        self._temp_instance_indices: list[int] | None = None
+        self._init_instance_list()
+
+    def set_temp_instance_indices(self, instance_indices: list[int] | None):
+        """设置临时实例索引列表"""
+        self._temp_instance_indices = instance_indices
+
+    def clear_temp_instance_indices(self):
+        """清除临时实例索引列表"""
+        self._temp_instance_indices = None
+
+    def _init_instance_list(self):
+        """
+        初始化账号列表
+        :return:
+        """
+        instance_list = self.dict_instance_list
+
+        self.instance_list.clear()
+        for instance in instance_list:
+            i = OneDragonInstance(**instance)
+            self.instance_list.append(i)
+
+    def create_new_instance(self, first: bool) -> OneDragonInstance:
+        """
+        创建一个新的脚本账号
+        :param first:
+        :return:
+        """
+        idx = 0
+        while True:
+            idx += 1
+            existed: bool = False
+            for instance in self.instance_list:
+                if instance.idx == idx:
+                    existed = True
+                    break
+            if not existed:
+                break
+
+        new_instance = OneDragonInstance(idx, f'{idx:02d}', first, True)
+        self.instance_list.append(new_instance)
+
+        dict_instance_list = self.dict_instance_list
+        dict_instance_list.append(vars(new_instance))
+        self.dict_instance_list = dict_instance_list
+
+        return new_instance
+
+    def update_instance(self, to_update: OneDragonInstance):
+        """
+        更新一个账号
+        :param to_update:
+        :return:
+        """
+        dict_instance_list = self.dict_instance_list
+
+        for instance in dict_instance_list:
+            if instance['idx'] == to_update.idx:
+                instance['name'] = to_update.name
+                instance['active_in_od'] = to_update.active_in_od
+
+        self.save()
+        self._init_instance_list()
+
+    def active_instance(self, instance_idx: int):
+        """
+        启用一个账号
+        :param instance_idx:
+        :return:
+        """
+        dict_instance_list = self.dict_instance_list
+
+        for instance in dict_instance_list:
+            instance['active'] = instance['idx'] == instance_idx
+
+        self.save()
+        self._init_instance_list()
+
+    def delete_instance(self, instance_idx: int):
+        """
+        删除一个账号
+        :param instance_idx:
+        :return:
+        """
+        idx = -1
+
+        dict_instance_list = self.dict_instance_list
+        for i in range(len(dict_instance_list)):
+            if dict_instance_list[i]['idx'] == instance_idx:
+                idx = i
+                break
+        if idx != -1:
+            dict_instance_list.pop(idx)
+        self.dict_instance_list = dict_instance_list
+
+        instance_dir = os_utils.get_path_under_work_dir('config', f'{instance_idx:02d}')
+        if os.path.exists(instance_dir):
+            shutil.rmtree(instance_dir)
+
+        self.save()
+        self._init_instance_list()
+
+    @property
+    def dict_instance_list(self) -> list[dict]:
+        return self.get('instance_list', [])
+
+    @dict_instance_list.setter
+    def dict_instance_list(self, new_list: list[dict]):
+        self.update('instance_list', new_list)
+
+    @property
+    def current_active_instance(self) -> OneDragonInstance | None:
+        """
+        获取当前激活使用的账号
+        :return:
+        """
+        for instance in self.instance_list:
+            if instance.active:
+                return instance
+        return None
+
+    @property
+    def current_instance_force_login(self) -> bool:
+        instance = self.current_active_instance
+        return instance is not None and instance.force_login_before_run
+
+    @property
+    def current_instance_should_force_login(self) -> bool:
+        """
+        判断当前激活的实例在一条龙运行前是否需要强制重新登录。
+
+        国服 / B服 / 国际服 是三个不同的游戏客户端, 各自保留一套登录状态,
+        跨客户端类型的实例之间不会互相影响登录。
+        只有当一条龙中同客户端类型的实例多于一个时, 才需要强制登录
+        以保证登录的是该实例配置的账号。
+        """
+        instance = self.current_active_instance
+        if instance is None:
+            return False
+
+        if self.instance_run != InstanceRun.ALL.value.value:
+            return False
+
+        instance_list = self.instance_list_in_od
+        if len(instance_list) <= 1:
+            return False
+
+        return GameAccountConfig.has_multi_instance_same_client(instance.idx, [i.idx for i in instance_list])
+
+    def set_current_instance_force_login(self, new_value: bool) -> None:
+        instance = self.current_active_instance
+        if instance is None:
+            return
+        instance.force_login_before_run = new_value
+        self.dict_instance_list = [vars(instance) for instance in self.instance_list]
+
+    @property
+    def instance_list_in_od(self) -> list[OneDragonInstance]:
+        """
+        需要在一条龙中运行的实例列表
+        如果设置了临时实例索引，则使用临时配置
+        :return:
+        """
+        if self._temp_instance_indices is not None:
+            return [instance for instance in self.instance_list if instance.idx in self._temp_instance_indices]
+        return [instance for instance in self.instance_list if instance.active_in_od]
+
+    @property
+    def instance_run(self) -> str:
+        return self.get('instance_run', InstanceRun.ALL.value.value)
+
+    @instance_run.setter
+    def instance_run(self, new_value: str):
+        self.update('instance_run', new_value)
+
+    @property
+    def after_done(self) -> str:
+        return self.get('after_done', AfterDoneOpEnum.NONE.value.value)
+
+    @after_done.setter
+    def after_done(self, new_value: str):
+        self.update('after_done', new_value)

@@ -1,0 +1,50 @@
+NoticeCard {
+    background-color: rgba(0, 0, 0, 204);
+    border-radius: 12px;
+}
+
+#bannerContainer {
+    border-radius: 12px;
+}
+
+#title {
+    color: #fff;
+}
+
+#title:hover {
+    color: #f5d742;
+}
+
+#date {
+    color: #ddd;
+}
+
+QListWidget {
+    background-color: transparent;
+    border: none;
+}
+
+QListWidget::item {
+    padding: 0px;
+}
+
+QStackedWidget {
+    background-color: transparent;
+}
+
+#error {
+    color: #f5d742;
+    background-color: #333333;
+    border: 2px solid #f5d742;
+    border-radius: 4px;
+    padding: 5px;
+    font-size: 12px;
+}
+
+PhosPivot, PhosPivotItem {
+    color: #fff;
+}
+
+PhosPivotItem:hover {
+    color: #f5d742;
+}
