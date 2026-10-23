@@ -1,6 +1,6 @@
 [project]
 name = "zzz-lost-void"
-version = "1.1.2"
+version = "1.2.0"
 description = "绝区零 迷失之地 + 自动战斗 | 拆分自 ZenlessZoneZero-OneDragon"
 readme = "README.md"
 license = "GPL-3.0-only"
