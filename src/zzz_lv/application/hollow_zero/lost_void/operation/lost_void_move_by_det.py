@@ -139,6 +139,10 @@ class LostVoidMoveByDet(ZOperation):
     AVOID_MAX_COLUMN_OFFSET: ClassVar[int] = 6  # 最多偏离目标几列 约 1/3 屏宽 避免把目标转出画面
     ESCAPE_DEPTH_MIN_DIFF: ClassVar[int] = 20  # 脱困时左右两侧障碍平均行相差超过这个行数 才信深度模型 否则按图标所在一侧绕
     ESCAPE_TARGET_MIN_DX: ClassVar[int] = 10  # 脱困时目标图标偏离画面中心超过这个像素 才按图标所在一侧绕
+    ESCAPE_BACK_STEP: ClassVar[float] = 0.5  # 脱困时每多卡一次 多后退多少秒
+    ESCAPE_BACK_MAX: ClassVar[float] = 2.0  # 脱困后退最长秒数
+    ESCAPE_FORWARD_STEP: ClassVar[float] = 0.2  # 脱困时每多卡一次 横移后多前进多少秒
+    ESCAPE_FORWARD_MAX: ClassVar[float] = 2.0  # 脱困横移后前进最长秒数
     AVOID_NEAR_TARGET_SIZE: ClassVar[int] = 50  # 目标图标宽高超过这个值说明已经很近 不再避障 与到达判断的入口图标大小一致
 
     # 锁定规划的入口 过不去时解除 按画面里的入口选
@@ -942,6 +946,17 @@ class LostVoidMoveByDet(ZOperation):
                 return diff_x < 0
         return None
 
+    @staticmethod
+    def get_escape_durations(escape_idx: int) -> tuple[float, float]:
+        """
+        脱困时后退和横移后前进的时长 随本段卡住次数增长
+        @param escape_idx: 本段移动第几次脱困 从 0 开始 第 0 次不后退不前进
+        @return: (后退秒数, 前进秒数)
+        """
+        back_time = min(escape_idx * LostVoidMoveByDet.ESCAPE_BACK_STEP, LostVoidMoveByDet.ESCAPE_BACK_MAX)
+        forward_time = min(escape_idx * LostVoidMoveByDet.ESCAPE_FORWARD_STEP, LostVoidMoveByDet.ESCAPE_FORWARD_MAX)
+        return back_time, forward_time
+
     @node_from(from_name='移动', status='尝试脱困')
     @node_from(from_name='无目标处理', status='尝试脱困')
     @operation_node(name='脱困')
@@ -950,7 +965,8 @@ class LostVoidMoveByDet(ZOperation):
         脱困
         @return:
         """
-        # 只按 A/D 横移 不普攻 不后退 不前进 不切人 横移过程中镜头一直对准目标
+        # 后退 -> 横移 -> 前进 只横移会贴着宽障碍或墙角滑 脱不了困 先退开再绕 绕过边缘后往前走
+        # 不普攻 不切人 横移过程中镜头一直对准目标
         # 朝同一方向连续绕行2次 仍卡住才换另一侧 避免左右交替互相抵消
         # 横移时间随本段移动卡住次数增长 换边后能覆盖到更远的位置
         # 不按本层累计次数算 否则前一段移动卡过 这一段第一次横移就过长 镜头转走丢了目标
@@ -966,10 +982,16 @@ class LostVoidMoveByDet(ZOperation):
         state.same_side_times += 1
         escape_idx = max(self._navigation_stuck_count - 1, 0)
         side_press_time = min(0.8 + 0.4 * escape_idx, 2.5)
-        log.info('寻路脱困 本段第%d次 向%s横移%.1f秒', self._navigation_stuck_count,
-                 '左' if state.prefer_left_escape else '右', side_press_time)
+        # 后退和前进按本层累计卡住次数算 每次脱困后会重新开一段寻路 本段计数永远是第1次 后退永远是0
+        level_idx = (max(state.stuck_times, 1) - 1) % 8
+        back_time, forward_time = LostVoidMoveByDet.get_escape_durations(level_idx)
+        log.info('寻路脱困 本段第%d次 本层第%d次 后退%.1f秒 向%s横移%.1f秒 前进%.1f秒',
+                 self._navigation_stuck_count, state.stuck_times,
+                 back_time, '左' if state.prefer_left_escape else '右', side_press_time, forward_time)
 
+        self._press_escape_key('s', back_time)
         self._strafe_facing_target(state.prefer_left_escape, side_press_time)
+        self._press_escape_key('w', forward_time)
         # 横移后仍丢失目标时 往横移的反方向转着找
         self._search_turn_right = state.prefer_left_escape
 
@@ -986,6 +1008,19 @@ class LostVoidMoveByDet(ZOperation):
             return self.round_success(LostVoidMoveByDet.STATUS_NEED_DETECT)
 
         return self.round_success('继续识别目标')
+
+    def _press_escape_key(self, key: str, press_time: float) -> None:
+        """
+        脱困时按住 W/S 一段时间 时长为 0 则不按
+        @param key: 's' 后退 'w' 前进
+        @param press_time: 按多久 秒
+        """
+        if press_time <= 0:
+            return
+        move = self.ctx.controller.move_s if key == 's' else self.ctx.controller.move_w
+        self._navigation_action((key,), duration_seconds=press_time)
+        move(press=True, press_time=press_time, release=True)
+        self._navigation_action(operation='stop')
 
     def _strafe_facing_target(self, to_left: bool, press_time: float) -> None:
         """
