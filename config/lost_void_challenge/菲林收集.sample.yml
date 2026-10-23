@@ -1,6 +1,5 @@
 # 辅助推进探究勋证和图鉴 优先选择未完成收集的战略、武备及NEW藏品 不能代表全部菲林奖励完成
-# 按速通图鉴教程: 开局武备同派系抱团 路线 武备格 > 限时格 > 金币格 偶遇事件出现多张NEW卡牌时重开本间
-auto_battle: 全配队通用
+# 按速通图鉴教程: 开局武备同派系抱团 路线 武备格 > 限时格 > 金币格auto_battle: 全配队通用
 region_type_priority:
 - 战斗-武备
 - 挑战-限时
@@ -23,5 +22,4 @@ investigation_strategy: 攻其不备战略
 chase_new_mode: true
 artifact_priority_new: true
 same_faction_first: true
-card_restart_for_new: true
 store_blood: true

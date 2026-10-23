@@ -176,14 +176,3 @@ class LostVoidChallengeConfig(YamlConfig):
     @same_faction_first.setter
     def same_faction_first(self, new_value: bool):
         self.update('same_faction_first', new_value)
-
-    @property
-    def card_restart_for_new(self) -> bool:
-        """
-        :return: 偶遇事件同时出现多张NEW卡牌时 是否拿一张后重开本间再拿另一张
-        """
-        return self.get('card_restart_for_new', False)
-
-    @card_restart_for_new.setter
-    def card_restart_for_new(self, new_value: bool):
-        self.update('card_restart_for_new', new_value)

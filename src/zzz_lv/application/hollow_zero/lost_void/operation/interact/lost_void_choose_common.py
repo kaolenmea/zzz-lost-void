@@ -1,6 +1,5 @@
 import re
 import time
-from typing import ClassVar
 
 from cv2.typing import MatLike
 
@@ -20,18 +19,12 @@ from zzz_lv.operation.zzz_operation import ZOperation
 
 class LostVoidChooseCommon(ZOperation):
 
-    STATUS_NEW_CARD_LEFT: ClassVar[str] = '还有NEW卡牌'
-
-    def __init__(self, ctx: ZContext, allow_new_card_restart: bool = False):
+    def __init__(self, ctx: ZContext):
         """
         有详情 有显示选择数量的选择
         :param ctx:
-        :param allow_new_card_restart: 单选卡牌出现多张NEW时 确认后返回 STATUS_NEW_CARD_LEFT 由调用方重开本间再拿
         """
         ZOperation.__init__(self, ctx, op_name='迷失之地-通用选择')
-
-        self.allow_new_card_restart: bool = allow_new_card_restart
-        self.new_card_left: bool = False  # 选完后仍有未拿的NEW卡牌
 
         self.to_choose_artifact: bool = False  # 需要选择普通藏品
         self.to_choose_gear: bool = False  # 需要选择武备
@@ -107,8 +100,6 @@ class LostVoidChooseCommon(ZOperation):
             available_list = [i for i in can_choose_list if i.can_choose]
             if len(available_list) == 0:
                 continue
-
-            self.check_new_card_left(available_list, target_num, chosen_cnt)
 
             # 同派系抱团 已有通用武备派系的候选最先选
             faction_list = [i for i in available_list if self.ctx.lost_void.is_gear_faction_match(i)]
@@ -214,17 +205,6 @@ class LostVoidChooseCommon(ZOperation):
                 return num
         return None
 
-    def check_new_card_left(self, available_list: list[LostVoidArtifactPos], target_num: int, chosen_cnt: int) -> None:
-        """
-        单选卡牌同时出现多张 NEW 时 记下选完后要重开本间再拿
-        """
-        if not self.allow_new_card_restart or target_num != 1 or chosen_cnt != 0:
-            return
-        new_card_cnt = len([i for i in available_list if i.is_new and i.artifact.category == '卡牌'])
-        self.new_card_left = new_card_cnt >= 2
-        if self.new_card_left:
-            log.info(f'选择决策 | 卡牌 | 同时出现{new_card_cnt}张NEW卡牌 选完后重开本间再拿')
-
     def click_candidate(self, target: LostVoidArtifactPos) -> None:
         """
         点击一个候选 并记下点过的
@@ -288,8 +268,6 @@ class LostVoidChooseCommon(ZOperation):
             log.info("藏品选择成功，已设置优先级更新标志")
             for chosen in chosen_list:
                 self.ctx.lost_void.run_memory.add_artifact(chosen.artifact)
-            if self.new_card_left:
-                return self.round_success(LostVoidChooseCommon.STATUS_NEW_CARD_LEFT)
             return self.round_success(result.status)
         else:
             return self.round_retry(result.status, wait=1)

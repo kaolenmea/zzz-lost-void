@@ -149,8 +149,6 @@ class LostVoidRunLevel(ZOperation):
         self.entry_gear_repeat_times: int = 0  # 入口层重复进入已完成武备选择画面的次数
         self.entry_gear_interact_done: bool = False  # 刚完成了一次入口层武备选择交互 交互后需要调整站位
         self.entry_door_block_times: int = 0  # 入口层放弃感叹号后 交互文本不是入口时前进重试的次数
-        self.new_card_restart_pending: bool = False  # 刚拿完卡牌 还有NEW卡牌 回到大世界后重开本间
-        self.new_card_restart_times: int = 0  # 本间为拿NEW卡牌重开的次数 最多2次(一次最多3张卡牌)
 
     def execute(self) -> OperationResult:
         """为本层生成采样编号，并区分正常完成、失败退出与中断。"""
@@ -177,7 +175,6 @@ class LostVoidRunLevel(ZOperation):
     @node_from(from_name='非战斗画面识别', status='未在大世界')  # 有小概率交互入口后 没处理好结束本次RunLevel 重新从等待加载 开始
     @node_from(from_name='非战斗画面识别', status='按钮-挑战-确认')  # 挑战类型的对话框确认后 第一次点击可能无效 跳回来这里点击到最后生效为止
     @node_from(from_name='处理寻路失败或阵亡', status='准备重试')  # 寻路失败后重试
-    @node_from(from_name='重开本间拿卡牌', status='准备重试')  # 重开本间后再拿另一张NEW卡牌
     @operation_node(name='等待加载', node_max_retry_times=60, is_start_node=True)
     def wait_loading(self) -> OperationRoundResult:
         if self.ctx.lost_void.in_normal_world(self.last_screenshot):
@@ -731,11 +728,7 @@ class LostVoidRunLevel(ZOperation):
                 completed_name_list=self.entry_gear_name_list if self.region_type == LostVoidRegionType.ENTRY else None,
             )
         elif screen_name == '迷失之地-通用选择':
-            # 偶遇事件同时出现多张NEW卡牌时 拿一张后重开本间再拿另一张
-            allow_new_card_restart = (self.ctx.lost_void.challenge_config.card_restart_for_new
-                                      and self.region_type == LostVoidRegionType.ENCOUNTER
-                                      and self.new_card_restart_times < 2)
-            interact_op = LostVoidChooseCommon(self.ctx, allow_new_card_restart=allow_new_card_restart)
+            interact_op = LostVoidChooseCommon(self.ctx)
         elif screen_name == '迷失之地-邦布商店':
             interact_type = '邦布商店'
             interact_op = LostVoidBangbooStore(self.ctx)
@@ -758,9 +751,6 @@ class LostVoidRunLevel(ZOperation):
             if op_result.success:
                 if interact_type is not None:
                     self.had_been_list.append(interact_type)
-
-                if op_result.status == LostVoidChooseCommon.STATUS_NEW_CARD_LEFT:
-                    self.new_card_restart_pending = True
 
                 if screen_name == '迷失之地-武备选择' and self.region_type == LostVoidRegionType.ENTRY:
                     # 入口层完成一次武备选择交互后 需要调整站位 让下一次交互能命中相邻的另一个NPC
@@ -967,8 +957,6 @@ class LostVoidRunLevel(ZOperation):
             if (completed_interact_target is not None
                     and completed_interact_target.name == LostVoidInteractNPC.AO_FEI_LI_YA.value):
                 self.ctx.lost_void.had_interacted_ophelia_on_current_level = True
-            if self.new_card_restart_pending:
-                return self.round_success(status='重开本间拿卡牌')
             if not (self.boss_pre_battle
                     and self.interact_target is not None
                     and not self.interact_target.after_battle):
@@ -1392,23 +1380,6 @@ class LostVoidRunLevel(ZOperation):
         self.ao_fei_li_ya_talked = False
         # 重开后角色位置重置 卡住计数也重新开始 否则上一轮的累计次数会让新一轮直接放弃寻路
         self.stuck_state = LostVoidStuckState()
-
-    @node_from(from_name='交互后处理', status='重开本间拿卡牌')
-    @operation_node(name='重开本间拿卡牌')
-    def restart_for_new_card(self) -> OperationRoundResult:
-        """
-        偶遇事件拿完一张NEW卡牌后 不离开房间 暂停-重新开始本间 再进同一个事件拿另一张
-        已拿到的卡牌不会因为重开丢失 不占用寻路失败的重开次数
-        """
-        self.new_card_restart_pending = False
-        self.new_card_restart_times += 1
-        log.info(f'还有NEW卡牌未拿 第 {self.new_card_restart_times} 次重开本间')
-        op = RestartInBattle(self.ctx)
-        op_result = op.execute()
-        if op_result.success:
-            self._reset_after_restart()
-            return self.round_success(status='准备重试')
-        return self.round_by_op_result(op_result)
 
     @node_from(from_name='处理寻路失败或阵亡', status='准备最终退出')
     @node_notify(when=NotifyTiming.CURRENT_DONE, detail=True)
