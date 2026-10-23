@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import cv2
@@ -15,7 +16,14 @@ from one_dragon.base.matcher.match_result import MatchResult
 from one_dragon.base.screen import screen_utils
 from one_dragon.base.screen.screen_area import ScreenArea
 from one_dragon.base.screen.screen_utils import FindAreaResultEnum
-from one_dragon.utils import cal_utils, cv2_utils, gpu_executor, str_utils, thread_utils
+from one_dragon.utils import (
+    cal_utils,
+    cv2_utils,
+    gpu_executor,
+    os_utils,
+    str_utils,
+    thread_utils,
+)
 from one_dragon.utils.log_utils import log
 from zzz_lv.auto_battle.atomic_op.atomic_op_factory import AtomicOpFactory
 from zzz_lv.auto_battle.auto_battle_agent_context import AutoBattleAgentContext
@@ -59,6 +67,7 @@ class AutoBattleContext:
         self._check_switch_backup_lock = threading.Lock()
         self._check_end_lock = threading.Lock()
         self._check_distance_lock = threading.Lock()
+        self._save_boss_screenshot_lock = threading.Lock()
 
         # 识别间隔
         self._check_chain_interval: float | list[float] = 0
@@ -66,6 +75,7 @@ class AutoBattleContext:
         self._check_switch_backup_interval: float | list[float] = 1
         self._check_end_interval: float | list[float] = 5
         self._check_distance_interval: float | list[float] = 5
+        self._save_boss_screenshot_interval: float = 1  # BOSS 战截图间隔
 
         # 上一次识别的时间
         self._last_check_chain_time: float = 0
@@ -74,6 +84,7 @@ class AutoBattleContext:
         self._last_check_end_time: float = 0
         self._last_check_distance_time: float = 0
         self._last_chain_front_correction_time: float = 0  # 上一次连携前台角色修正的时间
+        self._last_save_boss_screenshot_time: float = 0
 
         # 识别结果
         self.last_check_in_battle: bool = False  # 是否在战斗画面
@@ -220,6 +231,7 @@ class AutoBattleContext:
 
         self.area_chain_1: ScreenArea = self.ctx.screen_loader.get_area('战斗画面', '连携技-1')
         self.area_chain_2: ScreenArea = self.ctx.screen_loader.get_area('战斗画面', '连携技-2')
+        self.area_boss_life: ScreenArea = self.ctx.screen_loader.get_area('迷失之地-大世界', '标识-BOSS血条')
 
         self.agent_context.init_screen_area()
 
@@ -576,6 +588,10 @@ class AutoBattleContext:
             future_list.append(_battle_state_check_executor.submit(self.check_quick_assist, screen, screenshot_time))
             future_list.append(_battle_state_check_executor.submit(self.check_switch_backup, screen, screenshot_time))
 
+            # BOSS 战截图 收集失衡条、异常积蓄条的识别样本
+            if self.ctx.battle_assistant_config.boss_screenshot_enabled:
+                future_list.append(_battle_state_check_executor.submit(self.save_boss_screenshot, screen, screenshot_time))
+
             # 距离
             if check_distance:
                 if self.ctx.model_config.ocr_use_gpu:
@@ -606,6 +622,33 @@ class AutoBattleContext:
                 future.result()
 
         return in_battle
+
+    def save_boss_screenshot(self, screen: MatLike, screenshot_time: float) -> None:
+        """
+        画面有 BOSS 血条时 按间隔保存原图到 .debug/boss_screenshot
+        """
+        if not self._save_boss_screenshot_lock.acquire(blocking=False):
+            return
+
+        try:
+            if screenshot_time - self._last_save_boss_screenshot_time < self._save_boss_screenshot_interval:
+                return
+            self._last_save_boss_screenshot_time = screenshot_time
+
+            part = cv2_utils.crop_image_only(screen, self.area_boss_life.rect)
+            mrl = self.ctx.tm.match_template(part, 'battle', 'boss_life',
+                                             threshold=self.area_boss_life.template_match_threshold)
+            if mrl.max is None:
+                return
+
+            save_dir = Path(os_utils.get_path_under_work_dir('.debug', 'boss_screenshot'))
+            time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime(screenshot_time))
+            millis = int(screenshot_time * 1000) % 1000
+            cv2_utils.save_image(screen, str(save_dir / f'{time_str}_{millis:03d}.png'))
+        except Exception:
+            log.error('保存 BOSS 战截图出错', exc_info=True)
+        finally:
+            self._save_boss_screenshot_lock.release()
 
     def check_chain_attack(self, screen: MatLike, screenshot_time: float) -> None:
         """

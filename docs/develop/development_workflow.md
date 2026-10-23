@@ -39,7 +39,7 @@
 
 ### 4. 提交
 
-按 AGENTS.md「提交流程」写 commit(中文 Conventional Commits)。
+按 AGENTS.md「提交流程」写 commit(英文 Conventional Commits)。
 
 ### 5. 配套产出(按需)
 

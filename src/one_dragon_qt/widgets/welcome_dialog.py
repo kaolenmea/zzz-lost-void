@@ -1,5 +1,5 @@
 from PySide6.QtCore import QTimer
-from qfluentwidgets import MessageBoxBase, DisplayLabel, LargeTitleLabel, SubtitleLabel
+from qfluentwidgets import BodyLabel, MessageBoxBase, DisplayLabel, LargeTitleLabel, SubtitleLabel
 from one_dragon.utils.i18_utils import gt, get_default_lang
 
 class WelcomeDialog(MessageBoxBase):
@@ -22,6 +22,11 @@ class WelcomeDialog(MessageBoxBase):
             content_label = LargeTitleLabel(self)
             content_label.setText("This software is completely <font color='red'>Open Source and Free</font><br>\nDo not purchase from <font color='red'>Third-party Channels</font><br>\nBeware of <font color='red'>Scams and Account Theft</font>")
         self.viewLayout.addWidget(content_label)
+
+        disclaimer_label = BodyLabel(self)
+        disclaimer_label.setWordWrap(True)
+        disclaimer_label.setText(gt('本软件仅供学习交流，使用产生的一切风险由使用者自行承担，开发者不提供售后服务。'))
+        self.viewLayout.addWidget(disclaimer_label)
 
         self._setup_buttons()
         self._start_countdown()

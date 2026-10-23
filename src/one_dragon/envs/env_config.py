@@ -384,6 +384,25 @@ class EnvConfig(YamlConfig):
         self.update('developer_mode', new_value)
 
     @property
+    def advanced_mode(self) -> bool:
+        """是否显示高级设置 免安装发布包默认关闭 只露核心功能 源码运行默认开启"""
+        return self.get('advanced_mode', os_utils.get_release_version() is None)
+
+    @advanced_mode.setter
+    def advanced_mode(self, new_value: bool) -> None:
+        """更新高级设置可见性配置。"""
+        self.update('advanced_mode', new_value)
+
+    @property
+    def first_guide_done(self) -> bool:
+        """首次运行的快速设置向导是否已经完成"""
+        return self.get('first_guide_done', False)
+
+    @first_guide_done.setter
+    def first_guide_done(self, new_value: bool) -> None:
+        self.update('first_guide_done', new_value)
+
+    @property
     def copy_screenshot(self) -> bool:
         """
         截图后是否复制到剪贴板

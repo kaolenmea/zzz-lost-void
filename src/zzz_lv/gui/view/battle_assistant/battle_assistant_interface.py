@@ -182,6 +182,12 @@ class BattleAssistantInterface(AppRunInterface):
         )
         group.addSettingCard(self.screenshot_opt)
 
+        self.boss_screenshot_opt = SwitchSettingCard(
+            icon=FluentIcon.CAMERA, title='BOSS战自动截图',
+            content='有BOSS血条时每秒存一张原图到 .debug/boss_screenshot，一张约2~3MB，收集完记得关',
+        )
+        group.addSettingCard(self.boss_screenshot_opt)
+
         return group
 
     def _build_auto_battle_page(self) -> QWidget:
@@ -286,6 +292,9 @@ class BattleAssistantInterface(AppRunInterface):
         )
         self.merged_opt.init_with_adapter(
             get_prop_adapter(self.ctx.battle_assistant_config, 'use_merged_file')
+        )
+        self.boss_screenshot_opt.init_with_adapter(
+            get_prop_adapter(self.ctx.battle_assistant_config, 'boss_screenshot_enabled')
         )
 
         # dodge

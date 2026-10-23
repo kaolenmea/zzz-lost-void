@@ -1,7 +1,6 @@
 # 开发过程产生的临时文件
 build/
 dist/
-zzz-od-test/
 .idea/
 .vscode/*
 !.vscode/launch.json

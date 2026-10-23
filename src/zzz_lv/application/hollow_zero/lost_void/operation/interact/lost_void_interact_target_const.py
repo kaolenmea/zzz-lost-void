@@ -31,6 +31,10 @@ class LostVoidBoss(Enum):
     JIE_PEI_TUO = '终结之役·杰佩托'
 
 
+# 混合入口(一扇门上方有多个区域图标)的交互文本 只说是复杂区域 看不出具体区域类型
+MIXED_ENTRY_NAME: str = '复杂区域'
+
+
 class LostVoidInteractTarget:
 
     def __init__(self, name: str, icon: str,
@@ -64,6 +68,9 @@ def match_interact_target(ctx: ZContext, ocr_result: str,) -> Optional[LostVoidI
     ocr_result = ocr_result.replace('>', '')
     if len(ocr_result) == 0:
         return None
+
+    if str_utils.find_best_match_by_difflib(ocr_result, [gt(MIXED_ENTRY_NAME, 'game')], cutoff=0.6) is not None:
+        return LostVoidInteractTarget(name=MIXED_ENTRY_NAME, icon=MIXED_ENTRY_NAME, is_entry=True)
 
     target_list: list[Union[str, Agent]] = (
             [i.value.value for i in LostVoidRegionType]  # 入口

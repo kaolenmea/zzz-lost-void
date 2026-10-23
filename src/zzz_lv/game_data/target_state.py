@@ -124,23 +124,4 @@ DETECTION_TASKS: List[DetectionTask] = [
             ),
         ],
     ),
-    # 任务3: 使用长度映射法检测强敌失衡值
-    DetectionTask(
-        task_id="boss_stun_by_length",
-        pipeline_name="boss_stun_line",  # 使用您指定的流水线
-        interval=0,
-        enabled = False,  # 禁用
-        is_async=True,
-        state_definitions=[
-            TargetStateDef(
-                "强敌-失衡值",
-                TargetCheckWay.MAP_CONTOUR_LENGTH_TO_PERCENT,
-                check_params={
-                    "full_value_length": 100,  # 100% 对应的像素长度
-                    "empty_value_length": 0,  # 0% 对应的像素长度
-                },
-                clear_on_miss=True,
-            ),
-        ],
-    ),
 ]

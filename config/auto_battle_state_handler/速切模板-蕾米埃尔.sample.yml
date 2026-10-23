@@ -9,11 +9,8 @@ handlers:
           - operation_template: "蕾米埃尔-终结技"
 
       - states: "[自定义-黄光切人, 0, 1]"
-        debug_name: "黄光切人：设置保护"
+        debug_name: "黄光切人"
         operations:
-          - op_name: "设置状态"
-            state_list: ["自定义-动作不打断", "自定义-无视闪光"]
-            seconds: 10
           - operation_template: "通用-支援攻击"
 
       - states: "[自定义-红光闪避, 0, 1]"
@@ -26,12 +23,10 @@ handlers:
         operations:
           - operation_template: "蕾米埃尔-连携攻击"
 
+      # 之前这里和黄光切人都设了 10 秒保护又不清 切进来后 10 秒内不闪避、不按快速支援、不做任何决策
       - states: "([按键-切换角色-下一个, 0, 0.3] | [按键-切换角色-上一个, 0, 0.3])"
-        debug_name: "普通切人：设置保护并等待"
+        debug_name: "普通切人后等待"
         operations:
-          - op_name: "设置状态"
-            state_list: ["自定义-动作不打断", "自定义-无视闪光"]
-            seconds: 10
           - op_name: "等待秒数"
             seconds: 0.3
 

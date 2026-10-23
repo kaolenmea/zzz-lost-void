@@ -1,7 +1,11 @@
 [project]
 name = "zzz-lost-void"
-version = "0.1.0"
+version = "1.0.0"
 description = "绝区零 迷失之地 + 自动战斗 | 拆分自 ZenlessZoneZero-OneDragon"
+readme = "README.md"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+authors = [{ name = "kaolenmea" }]
 requires-python = ">=3.11.9,<3.12"
 dependencies = [
     "pyside6==6.11.1",
@@ -21,6 +25,10 @@ dependencies = [
     # import win32ui 会闪退（issue #2428）；锁 <312 沿用 311（自带 pythonwin/mfc140u.dll）。等上游 build 313 修复后放开。
     "pywin32<312",
 ]
+
+[project.urls]
+Homepage = "https://github.com/kaolenmea/zzz-lost-void"
+Issues = "https://github.com/kaolenmea/zzz-lost-void/issues"
 
 [dependency-groups]
 dev = [
@@ -105,3 +113,7 @@ typeCheckingMode = "off"
 # (取代 CI 的 PYTHONPATH=src env 和测试文件里手动的 sys.path.insert)
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+    "requires_models: 需要本地放置 OCR 等模型，CI 默认跳过",
+]

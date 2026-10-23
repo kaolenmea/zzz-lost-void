@@ -89,7 +89,7 @@ class AutoBattleOperator(ConditionalOperator):
             data: 配置文件内容
         """
         self.author = data.get('author', '')
-        self.homepage = data.get('homepage', 'https://qm.qq.com/q/wuVRYuZzkA')
+        self.homepage = data.get('homepage', 'https://github.com/kaolenmea/zzz-lost-void')
         self.thanks = data.get('thanks', '')
         self.version = data.get('version', '')
         self.introduction = data.get('introduction', '')

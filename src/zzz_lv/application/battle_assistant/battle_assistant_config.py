@@ -63,3 +63,12 @@ class BattleAssistantConfig(YamlConfig):
     @auto_ultimate_enabled.setter
     def auto_ultimate_enabled(self, new_value: bool) -> None:
         self.update('auto_ultimate_enabled', new_value)
+
+    @property
+    def boss_screenshot_enabled(self) -> bool:
+        """BOSS 战自动截图开关"""
+        return self.get('boss_screenshot_enabled', False)
+
+    @boss_screenshot_enabled.setter
+    def boss_screenshot_enabled(self, new_value: bool) -> None:
+        self.update('boss_screenshot_enabled', new_value)

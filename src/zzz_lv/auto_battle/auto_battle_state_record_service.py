@@ -9,6 +9,7 @@ from one_dragon.base.conditional_operation.state_recorder import StateRecorder
 from one_dragon.utils.log_utils import log
 from zzz_lv.auto_battle.auto_battle_dodge_context import YoloStateEventEnum
 from zzz_lv.auto_battle.auto_battle_state import BattleStateEnum
+from zzz_lv.auto_battle.target_state.enemy_bar_checker import ENEMY_BAR_STATE_NAMES
 from zzz_lv.game_data.agent import AgentEnum, AgentTypeEnum, CommonAgentStateEnum
 from zzz_lv.game_data.target_state import DETECTION_TASKS
 
@@ -120,6 +121,7 @@ class AutoBattleStateRecordService(StateRecordService):
             for state_def in task.state_definitions:
                 if state_def.state_name not in event_ids:
                     event_ids.append(state_def.state_name)
+        event_ids.extend(ENEMY_BAR_STATE_NAMES)
 
         # 这是一个旧的状态 等待后续删除或者恢复识别
         # 完全不知道这个注册器有有什么作用，实测根本不影响状态运转

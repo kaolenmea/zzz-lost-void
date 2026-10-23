@@ -1,5 +1,6 @@
 import ctypes
 import datetime
+import json
 import os
 import subprocess
 import sys
@@ -95,6 +96,23 @@ def get_work_dir() -> str:
     if run_in_exe():
         return str(Path(sys.executable).resolve().parent)
     return str(Path(__file__).resolve().parents[3])
+
+
+def get_release_version() -> str | None:
+    """
+    读取免安装发布包的版本号
+    发布包根目录有 release.json（打包脚本写入） 源码运行时没有这个文件
+    :return: 版本号 不是发布包返回 None
+    """
+    release_file = Path(get_work_dir()) / 'release.json'
+    if not release_file.is_file():
+        return None
+    try:
+        data = json.loads(release_file.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return None
+    version = data.get('version') if isinstance(data, dict) else None
+    return str(version) if version else None
 
 
 def is_admin() -> bool:

@@ -15,7 +15,7 @@
 - 代码布局：`src-layout`，源码在 `src/`，运行时配置在 `config/`，资源在 `assets/`，开发文档在 `docs/develop/`。
 - 运行基准：1080p；配置以 YAML 为主。
 - 业务包名是 `zzz_lv`（上游叫 `zzz_od`）。
-- 上游测试（独立仓 `zzz-od-test`）**尚未迁移**，目前没有自动化测试；改动只能在 Windows 上手动运行验证。测试方法论见 [testing/](docs/develop/testing/README.md)。
+- 自动化测试在本仓 `tests/`（纯逻辑测试不需要游戏和模型）；上游独立测试仓 `zzz-od-test` 尚未迁移，涉及游戏画面的改动仍要在 Windows 上手动运行验证。测试方法论见 [testing/](docs/develop/testing/README.md)。
 - 上游、yolo 训练仓、数据集见 [相关仓库](docs/develop/setup/repositories.md)。
 
 ## 常用命令
@@ -25,6 +25,7 @@ uv sync --group dev
 uv run --env-file .env src/zzz_lv/gui/app.py
 uv run --env-file .env ruff check src/你修改的文件.py
 uv run --env-file .env ruff check --fix src/你修改的文件.py
+uv run --env-file .env pytest -m "not requires_models"
 ```
 
 - `.env` 由 `.env.sample` 复制而来（只设 `PYTHONPATH=src`）。
@@ -86,6 +87,7 @@ uv run --env-file .env ruff check --fix src/你修改的文件.py
 
 - 修改代码后，同步更新对应的 `docs/develop/` 文档。
 - 测试方法论（测试基建 / FixtureController 流程测试 / 画面截图存档）见 [docs/develop/testing/](docs/develop/testing/README.md)。
+- 新增或修改逻辑时，尽量把判断写成纯函数并在 `tests/` 加测试；需要 OCR 模型的测试加 `@pytest.mark.requires_models`。
 - 提交前至少验证自己改动直接影响的部分；若无法本地完成，要明确说明缺失前提。
 - 复杂功能、架构调整或新自动化流程，先补设计/说明文档，再继续实现。
 
@@ -93,7 +95,7 @@ uv run --env-file .env ruff check --fix src/你修改的文件.py
 
 - 默认不要主动执行 `git commit`、`git push`、`git reset`、删分支等版本控制操作，除非用户明确要求。
 - 如果用户明确要求切换分支，先 `stash` 当前改动，再切换。
-- **commit 规范**：中文 + [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) 格式 `type(scope): subject`（type ∈ `feat / fix / docs / refactor / test / chore / perf / build / ci / style`，scope = 模块）；body 写为什么改 + 改动要点。
+- **commit 规范**：英文 + [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) 格式 `type(scope): subject`（type ∈ `feat / fix / docs / refactor / test / chore / perf / build / ci / style`，scope = 模块）；body 写为什么改 + 改动要点。
 - Review 关注逻辑错误、运行时崩溃、死循环、资源泄漏；不要为风格问题大改现有代码。
 
 ## 自维护指南（改 AI 入口文件）

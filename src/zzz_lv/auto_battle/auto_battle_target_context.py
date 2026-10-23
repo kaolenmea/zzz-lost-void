@@ -8,6 +8,12 @@ from cv2.typing import MatLike
 
 from one_dragon.base.conditional_operation.state_recorder import StateRecord
 from one_dragon.utils.log_utils import log
+from zzz_lv.auto_battle.target_state.enemy_bar_checker import (
+    ANOMALY_STATE_PREFIX,
+    STUN_STATE_NAMES,
+    AnomalyBuildupChecker,
+    check_boss_stun,
+)
 from zzz_lv.auto_battle.target_state.target_state_checker import TargetStateChecker
 from zzz_lv.context.zzz_context import ZContext
 from zzz_lv.game_data.target_state import DETECTION_TASKS, DetectionTask
@@ -18,6 +24,9 @@ if TYPE_CHECKING:
 
 # 模块私有的独立线程池，用于并行处理状态检测任务
 _target_context_executor = ThreadPoolExecutor(thread_name_prefix='od_target_context', max_workers=8)
+
+_STUN_CHECK_INTERVAL: float = 0.1
+_ANOMALY_CHECK_INTERVAL: float = 0.2
 
 
 class AutoBattleTargetContext:
@@ -41,6 +50,11 @@ class AutoBattleTargetContext:
         # 动态初始化计时器和间隔
         self._last_check_times: Dict[str, float] = {task.task_id: 0 for task in self.tasks}
         self._current_intervals: Dict[str, float] = {task.task_id: task.interval for task in self.tasks}
+
+        # 失衡条和异常积蓄圈 按像素直接识别 不走 CV 流水线
+        self._anomaly_checker: AnomalyBuildupChecker | None = None
+        self._last_stun_check_time: float = 0
+        self._last_anomaly_check_time: float = 0
 
     def init_auto_op(
             self,
@@ -101,6 +115,8 @@ class AutoBattleTargetContext:
                         cv_ctx, sync_results = self.checker.run_task(screen, task)
                         self._handle_results(records_to_update, sync_results, screenshot_time, task)
 
+            self._check_enemy_bar(screen, screenshot_time, records_to_update)
+
             # 处理异步任务结果
             for future, task in futures.items():
                 try:
@@ -115,6 +131,30 @@ class AutoBattleTargetContext:
 
         finally:
             self._check_lock.release()
+
+    def _check_enemy_bar(self, screen: MatLike, screenshot_time: float, records_list: list[StateRecord]) -> None:
+        """
+        识别 BOSS 失衡条和被锁定敌人的异常积蓄圈
+        画面上看不到（被演出藏起来、被特效挡住）时不更新 保留上一次的值
+        """
+        if screenshot_time - self._last_stun_check_time >= _STUN_CHECK_INTERVAL:
+            self._last_stun_check_time = screenshot_time
+            stun = check_boss_stun(screen)
+            if stun is not None:
+                for phase, state_name in STUN_STATE_NAMES.items():
+                    if phase == stun.phase:
+                        records_list.append(StateRecord(state_name, screenshot_time, value=stun.percent))
+                    else:
+                        records_list.append(StateRecord(state_name, is_clear=True))
+
+        if screenshot_time - self._last_anomaly_check_time >= _ANOMALY_CHECK_INTERVAL:
+            self._last_anomaly_check_time = screenshot_time
+            if self._anomaly_checker is None:
+                template = self.ctx.template_loader.get_template('target_state', 'anomaly_icon')
+                self._anomaly_checker = AnomalyBuildupChecker(template.raw)
+            buildup = self._anomaly_checker.check(screen)
+            if buildup is not None:
+                records_list.append(StateRecord(ANOMALY_STATE_PREFIX + buildup.attribute, screenshot_time, value=buildup.percent))
 
     def _handle_results(self, records_list: List[StateRecord],
                         results: List[Tuple[str, Any]],

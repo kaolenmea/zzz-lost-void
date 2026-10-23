@@ -2,18 +2,12 @@ from qfluentwidgets import FluentIcon
 
 from one_dragon_qt.widgets.pivot_navi_interface import PivotNavigatorInterface
 from zzz_lv.context.zzz_context import ZContext
-from zzz_lv.gui.view.hollow_zero.lost_void_challenge_config_interface import (
-    LostVoidChallengeConfigInterface,
-)
 from zzz_lv.gui.view.hollow_zero.lost_void_run_interface import LostVoidRunInterface
-from zzz_lv.gui.view.hollow_zero.predefined_team_interface import (
-    PredefinedTeamInterface,
-)
 
 
 class LostVoidInterface(PivotNavigatorInterface):
     """
-    迷失之地主界面 集中放运行（含常用配置）、挑战配置和预备编队
+    迷失之地主界面 只有运行页（含常用配置） 挑战配置随刷取目标自动切换
     """
 
     def __init__(self, ctx: ZContext, parent=None) -> None:
@@ -29,8 +23,6 @@ class LostVoidInterface(PivotNavigatorInterface):
     def create_sub_interface(self) -> None:
         self.run_interface: LostVoidRunInterface = LostVoidRunInterface(self.ctx)
         self.add_sub_interface(self.run_interface)
-        self.add_sub_interface(LostVoidChallengeConfigInterface(self.ctx))
-        self.add_sub_interface(PredefinedTeamInterface(self.ctx))
 
     def start_running(self) -> None:
         """

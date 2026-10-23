@@ -90,6 +90,7 @@ class MainAppWindowBase(AppWindowBase):
             lambda: self.set_developer_mode(True)
         )
         self._apply_developer_mode_visibility()
+        self._apply_advanced_mode_visibility()
 
         self.context_notify_signal.connect(self._show_context_notify)
         self.ctx.listen_event(ContextNotifyEvent.EVENT_ID, self._emit_context_notify)
@@ -166,6 +167,20 @@ class MainAppWindowBase(AppWindowBase):
                 position=InfoBarPosition.TOP_RIGHT,
                 parent=self,
             )
+
+    def set_advanced_mode(self, enabled: bool) -> None:
+        """更新高级设置开关并立即刷新相关入口。"""
+        if self.ctx.env_config.advanced_mode != enabled:
+            self.ctx.env_config.advanced_mode = enabled
+        self._apply_advanced_mode_visibility()
+
+    def _apply_advanced_mode_visibility(self) -> None:
+        """刷新已经创建的界面里只在高级设置下显示的控件。"""
+        for index in range(self.stackedWidget.count()):
+            interface = self.stackedWidget.widget(index)
+            updater = getattr(interface, '_update_advanced_visibility', None)
+            if callable(updater):
+                updater()
 
     def _apply_developer_mode_visibility(self) -> None:
         """刷新已经创建的开发者和实验功能控件。"""

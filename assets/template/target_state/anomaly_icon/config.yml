@@ -1,0 +1,8 @@
+sub_dir: target_state
+template_id: anomaly_icon
+template_name: 异常积蓄圆标
+template_shape: rectangle
+auto_mask: true
+point_list:
+- 1065, 522
+- 1122, 555

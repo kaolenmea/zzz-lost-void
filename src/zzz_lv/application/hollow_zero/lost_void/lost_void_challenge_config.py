@@ -1,10 +1,7 @@
-import os
 from enum import Enum
 
 from one_dragon.base.config.config_item import ConfigItem
 from one_dragon.base.config.yaml_config import YamlConfig
-from one_dragon.utils import os_utils
-from one_dragon.utils.log_utils import log
 
 
 class LostVoidRegionType(Enum):
@@ -42,15 +39,6 @@ class LostVoidPeriodBuffNo(Enum):
     NO_3 = ConfigItem('第三个')
 
 
-class LostVoidBuyOnlyPriority(Enum):
-    NONE = ConfigItem('刷新0次', value=0)
-    NO_1 = ConfigItem('刷新1次(50硬币)', value=1)
-    NO_2 = ConfigItem('刷新2次(100硬币)', value=2)
-    NO_3 = ConfigItem('刷新3次(200硬币)', value=3)
-    NO_4 = ConfigItem('刷新4次(300硬币)', value=4)
-    ALWAYS = ConfigItem('一直刷新', value=999)
-
-
 class LostVoidChallengeConfig(YamlConfig):
 
     def __init__(self, module_name: str, is_mock: bool = False):
@@ -58,96 +46,11 @@ class LostVoidChallengeConfig(YamlConfig):
             self,
             module_name,
             sub_dir=['lost_void_challenge'],
-            is_mock=is_mock, sample=True, copy_from_sample=False,
+            is_mock=is_mock, sample=True, copy_from_sample=False, read_sample_only=True,
         )
-
-        self.old_module_name: str = self.module_name
-        self.old_file_path: str = self.file_path
 
         # 实战中整合协战代理人武备后的第一优先级
         self._artifact_priority_in_battle: list[str] | None = None
-
-    def copy_new(self) -> None:
-        """
-        复制变成一个新的
-        :return:
-        """
-        self.module_name = self.module_name + '_copy'
-        self.old_module_name = self.module_name
-        self.remove_sample()
-
-    def remove_sample(self) -> None:
-        """
-        设置为不是sample
-        :return:
-        """
-        self._sample = False
-        self.file_path = self._get_yaml_file_path()
-
-    def update_module_name(self, value: str) -> None:
-        """
-        更新模块名称
-        :param value: 新名字
-        """
-        self.module_name = value
-        self._sample = False
-
-        self.save()
-
-    def save(self) -> None:
-        if self.old_module_name != self.module_name:
-            # 删除旧文件
-            os.remove(self.old_file_path)
-            self.file_path = self._get_yaml_file_path()
-
-        self.old_module_name = self.module_name
-        self.old_file_path = self.file_path
-        YamlConfig.save(self)
-
-    @property
-    def predefined_team_idx(self) -> int:
-        # 预备配队下标 -1为使用当前配队
-        return self.get('predefined_team_idx', -1)
-
-    @predefined_team_idx.setter
-    def predefined_team_idx(self, new_value: int):
-        self.update('predefined_team_idx', new_value)
-
-    @property
-    def choose_team_by_priority(self) -> bool:
-        """
-        当副本有当期UP时 优先选择相关配队
-        :return:
-        """
-        return self.get('choose_team_by_priority', False)
-
-    @choose_team_by_priority.setter
-    def choose_team_by_priority(self, new_value: bool):
-        self.update('choose_team_by_priority', new_value)
-
-    @property
-    def manually_choose_agent(self) -> bool:
-        """
-        自选代理人开关
-        :return:
-        """
-        return self.get('manually_choose_agent', False)
-
-    @manually_choose_agent.setter
-    def manually_choose_agent(self, new_value: bool):
-        self.update('manually_choose_agent', new_value)
-
-    @property
-    def team_info(self) -> list[str]:
-        """
-        自选代理人
-        :return:
-        """
-        return self.get('team_info', ['unknown', 'unknown', 'unknown'])
-
-    @team_info.setter
-    def team_info(self, new_value: list[str]):
-        self.update('team_info', new_value)
 
     @property
     def auto_battle(self) -> str:
@@ -177,10 +80,6 @@ class LostVoidChallengeConfig(YamlConfig):
     def artifact_priority(self, new_value: list[str]):
         self.update('artifact_priority', new_value)
 
-    @property
-    def artifact_priority_str(self) -> str:
-        return '\n'.join(self.artifact_priority)
-
     # 战斗组：协战代理人武备属性, 程序运行时自动添加, 独立于用户配置的优先级
     @property
     def artifact_priority_in_battle(self) -> list[str]:
@@ -200,10 +99,6 @@ class LostVoidChallengeConfig(YamlConfig):
         self.update('artifact_priority_2', new_value)
 
     @property
-    def artifact_priority_2_str(self) -> str:
-        return '\n'.join(self.artifact_priority_2)
-
-    @property
     def region_type_priority(self) -> list[str]:
         return self.get('region_type_priority', [])
 
@@ -212,24 +107,12 @@ class LostVoidChallengeConfig(YamlConfig):
         self.update('region_type_priority', new_value)
 
     @property
-    def region_type_priority_str(self) -> str:
-        return '\n'.join(self.region_type_priority)
-
-    @property
     def period_buff_no(self) -> str:
-        return self.get('period_buff_no', LostVoidPeriodBuffNo.NO_1.value.value)
+        return self.get('period_buff_no', LostVoidPeriodBuffNo.NO_2.value.value)
 
     @period_buff_no.setter
     def period_buff_no(self, new_value: str):
         self.update('period_buff_no', new_value)
-
-    @property
-    def buy_only_priority_2(self) -> int:
-        return self.get('buy_only_priority_2', 3)
-
-    @buy_only_priority_2.setter
-    def buy_only_priority_2(self, new_value: int):
-        self.update('buy_only_priority_2', new_value)
 
     @property
     def store_gold(self) -> bool:
@@ -283,56 +166,24 @@ class LostVoidChallengeConfig(YamlConfig):
     def chase_new_mode(self, new_value: bool):
         self.update('chase_new_mode', new_value)
 
+    @property
+    def same_faction_first(self) -> bool:
+        """
+        :return: 是否最优先选择开局通用武备同派系的鸣徽和武备
+        """
+        return self.get('same_faction_first', False)
 
-def get_all_lost_void_challenge_config(with_sample: bool = True) -> list[LostVoidChallengeConfig]:
-    config_list: list[LostVoidChallengeConfig] = []
-    dir_path = os_utils.get_path_under_work_dir('config', 'lost_void_challenge')
-    config_name_list = os.listdir(dir_path)
-    existed_module_set = set()
-    for config_name in config_name_list:
-        if not config_name.endswith('.yml'):
-            continue
-        if config_name.endswith('.sample.yml'):
-            if not with_sample:
-                continue
-            module_name = config_name[:-11]
-            # 参数说明模板 只给人看 不作为可选配置
-            if module_name == 'parameter_template':
-                continue
-        else:
-            module_name = config_name[:-4]
+    @same_faction_first.setter
+    def same_faction_first(self, new_value: bool):
+        self.update('same_faction_first', new_value)
 
-        if module_name in existed_module_set:
-            continue
-        existed_module_set.add(module_name)
+    @property
+    def card_restart_for_new(self) -> bool:
+        """
+        :return: 偶遇事件同时出现多张NEW卡牌时 是否拿一张后重开本间再拿另一张
+        """
+        return self.get('card_restart_for_new', False)
 
-        try:
-            config = LostVoidChallengeConfig(module_name)
-            config_list.append(config)
-        except Exception:
-            log.error('配置文件读取错误 跳过 %s', config_name)
-    return config_list
-
-
-def get_lost_void_challenge_new_name() -> str:
-    """
-    获取新的配置文件的命名
-    :return:
-    """
-    prefix: str = '自定义-'
-    max_idx: int = 0
-    dir_path = os_utils.get_path_under_work_dir('config', 'lost_void_challenge')
-    config_name_list = os.listdir(dir_path)
-    for config_name in config_name_list:
-        if not config_name.endswith('.yml'):
-            continue
-        if not config_name.startswith(prefix):
-            continue
-        try:
-            idx = int(config_name[len(prefix):-4])
-            if idx > max_idx:
-                max_idx = idx
-        except Exception:
-            pass
-
-    return f'{prefix}{max_idx + 1:02d}'
+    @card_restart_for_new.setter
+    def card_restart_for_new(self, new_value: bool):
+        self.update('card_restart_for_new', new_value)

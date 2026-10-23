@@ -4,7 +4,7 @@
 
 ## 文档索引
 
-- **开发环境与工具**：[快速开始](setup/quickstart.md) · [相关仓库](setup/repositories.md) · [AI 编码助手接入](setup/ai_coding.md)
+- **开发环境与工具**：[快速开始](setup/quickstart.md) · [相关仓库](setup/repositories.md) · [AI 编码助手接入](setup/ai_coding.md) · [打包与发布](setup/release.md)
 - **编码规范**：[agent_guidelines.md](spec/agent_guidelines.md)
 - **开发流程**：[端到端开发流程](development_workflow.md)
 - **架构设计**：[一条龙整体架构](one_dragon/one_dragon_architecture.md) · [资源下载源与候选回退](one_dragon/modules/resource_download.md) · [项目工作目录](one_dragon/modules/work_directory.md) · [模块文档](one_dragon/modules/)
@@ -33,7 +33,7 @@
 
 ### 1.3.测试
 
-上游的测试放在独立仓库 [zzz-od-test](https://github.com/OneDragon-Anything/zzz-od-test)，本仓库拆分时**尚未迁移**测试。迁移前，改动只能在 Windows 上手动运行验证。
+本仓库的自动化测试在 `tests/`：`uv run --env-file .env pytest -m "not requires_models"` 跑纯逻辑测试，不需要游戏和模型。上游的测试放在独立仓库 [zzz-od-test](https://github.com/OneDragon-Anything/zzz-od-test)，其中的识别测试和截图存档**尚未迁移**，涉及游戏画面的改动仍要在 Windows 上手动运行验证。
 
 > 测试方法论(测试基建 / FixtureController 流程测试 / 画面截图存档)见 [testing/](testing/)。
 

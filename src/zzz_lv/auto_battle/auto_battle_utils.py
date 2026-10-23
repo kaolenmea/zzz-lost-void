@@ -48,6 +48,9 @@ def _get_agent_priority(agent: Agent) -> int:
     :return:
     """
     # -- 特殊角色判断 --
+    # 简 队伍里有简就只用简移动 蕾米埃尔等角色容易跑过头
+    if agent.agent_id == 'jane_doe':
+        return -1
     # 耀嘉音
     if agent.agent_id == 'astra_yao':
         return 5

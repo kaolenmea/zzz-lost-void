@@ -23,7 +23,7 @@ uv sync --group dev
 
 ```
 uv run --env-file .env src/zzz_lv/gui/app.py  # 运行可视化窗口
-uv run --env-file .env pytest zzz-od-test/ # 运行所有测试
+uv run --env-file .env pytest -m "not requires_models" # 运行纯逻辑测试(tests/)
 
 uv run --env-file .env ruff check src/你修改的文件.py  # 仅检查自己改的文件
 uv run --env-file .env ruff format src/你修改的文件.py # 仅格式化自己改的文件
@@ -43,7 +43,7 @@ uv run --group dev pre-commit run --files src/你修改的文件.py
 
 ## 开发规范
 - **文件编码**: 编写文件时始终使用 UTF-8 格式，以确保正确的字符编码支持。
-- **保持测试同步**: 修改任何模块后，您必须更新 `zzz-od-test/` 中的测试文件。确保修改后的代码已被覆盖且所有测试都通过。
+- **保持测试同步**: 修改任何模块后，您必须更新 `tests/` 中的测试文件。确保修改后的代码已被覆盖且所有测试都通过。
 - **保持文档同步**: 修改任何模块后，您必须更新 `docs/develop/` 中对应的文档文件。确保文档准确反映更改。
 - **Git 工作流**: 你的职责是根据用户请求编写和修改代码。不要执行任何 `git` 操作，如 `commit` 或 `push`。用户将处理所有版本控制操作。
 - **使用 context7**: 需要库/API文档、代码生成、安装方法、使用方法时，请始终使用context7。

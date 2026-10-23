@@ -65,6 +65,14 @@ class SettingEnvInterface(VerticalScrollInterface):
         self.debug_opt.value_changed.connect(lambda: self.ctx.init_async())
         basic_group.addSettingCard(self.debug_opt)
 
+        self.advanced_mode_opt = SwitchSettingCard(
+            icon=FluentIcon.SETTING,
+            title='显示高级设置',
+            content='关闭后只显示常用设置，其余用默认值；已有配置不会改变',
+        )
+        self.advanced_mode_opt.value_changed.connect(self._on_advanced_mode_changed)
+        basic_group.addSettingCard(self.advanced_mode_opt)
+
         self.developer_mode_opt = SwitchSettingCard(
             icon=FluentIcon.DEVELOPER_TOOLS,
             title='开发者模式',
@@ -115,6 +123,9 @@ class SettingEnvInterface(VerticalScrollInterface):
 
         self.screenshot_method_opt.init_with_adapter(self.ctx.env_config.get_prop_adapter('screenshot_method'))
         self.debug_opt.init_with_adapter(self.ctx.env_config.get_prop_adapter('is_debug'))
+        self.advanced_mode_opt.init_with_adapter(
+            self.ctx.env_config.get_prop_adapter('advanced_mode')
+        )
         self.developer_mode_opt.init_with_adapter(
             self.ctx.env_config.get_prop_adapter('developer_mode')
         )
@@ -125,6 +136,12 @@ class SettingEnvInterface(VerticalScrollInterface):
         self.key_screenshot_input.init_with_adapter(self.ctx.env_config.get_prop_adapter('key_screenshot'))
         self.key_debug_input.init_with_adapter(self.ctx.env_config.get_prop_adapter('key_debug'))
         self._apply_developer_visibility(self.ctx.env_config.developer_mode)
+
+    def _on_advanced_mode_changed(self, value: bool) -> None:
+        """通知主窗口更新高级设置可见性。"""
+        window = self.window()
+        if hasattr(window, 'set_advanced_mode'):
+            window.set_advanced_mode(value)
 
     def _on_developer_mode_changed(self, value: bool) -> None:
         """通知主窗口更新开发者功能可见性。"""

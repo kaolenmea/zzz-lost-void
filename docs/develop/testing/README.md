@@ -1,16 +1,22 @@
 # 测试方法论
 
-> `docs/develop/testing/` 的入口。测试代码在独立仓 `zzz-od-test`(主仓 `.gitignore` 忽略它,clone 到主仓根目录用)。本目录记**怎么跑测试 + 测试基建 + 怎么判断写哪些 + 怎么写**。
+> `docs/develop/testing/` 的入口。测试代码在本仓 `tests/`。本目录记**怎么跑测试 + 测试基建 + 怎么判断写哪些 + 怎么写**。
+>
+> 下文里的 `zzz-od-test/...` 路径是上游独立测试仓的写法,**目前只有 §1 描述的两类测试已在本仓落地**;识别测试的基建(`test_context` / `MockController` / `FixtureController`)还在上游测试仓,需要时再迁入 `tests/`。
 
 ## 1. 测试在哪 / 怎么跑
 
-- 测试代码在独立仓 [zzz-od-test](https://github.com/OneDragon-Anything/zzz-od-test);clone 到主仓根目录,IDE 里把 `zzz-od-test/` 设为 `Test Sources Root`。
-- 主仓不保留测试(`tests/` 已废弃);新测试加到 `zzz-od-test/test/` 对应被测包路径下。
-- 环境变量:把 `zzz-od-test/.env.sample` 复制到主仓根 → `.env`(部分测试需要;本地若只跑自己改的部分,可不配全)。
+- 测试代码在本仓 `tests/`,按被测包路径放(如被测 `src/zzz_lv/application/hollow_zero/lost_void/lost_void_config.py` → `tests/zzz_lv/application/hollow_zero/lost_void/test_lost_void_config.py`)。
+- 两类测试:
+  1. **纯逻辑测试**:不需要游戏、模型。`tests/conftest.py` 的 `lv_config` / `lv_run_record` 把配置读写换成内存字典,不碰磁盘。新功能的判断尽量写成纯函数(例如 `lost_void_aether_activity.py`),方便这样测。
+  2. **识别测试**:要 OCR 等模型,加 `@pytest.mark.requires_models`,CI 默认跳过,本机放好模型后再跑。
 - 跑测试:
   ```shell
-  uv run --env-file .env pytest zzz-od-test/
+  uv run --env-file .env pytest -m "not requires_models"   # 纯逻辑测试(CI 跑这个)
+  uv run --env-file .env pytest                             # 全部(识别测试需要本机有模型)
   ```
+- CI:`.github/workflows/ci.yml` 在 PR 和推送到 main 时跑纯逻辑测试。
+- 上游测试仓 [zzz-od-test](https://github.com/OneDragon-Anything/zzz-od-test) 的测试和截图存档尚未迁移,迁移时参考它的 `conftest.py`。
 
 ## 2. 测试基建(`zzz-od-test/test/conftest.py`)
 
@@ -190,10 +196,7 @@ assert r2.is_success
 
 ## 7. 提交坑(重要)
 
-测试文件在 `zzz-od-test` 独立仓。主仓 `git add zzz-od-test/...` 会被 `.gitignore` **静默跳过**(不报错但未加入)。必须在测试仓内提交(always-on 提示见 [AGENTS.md](../../../AGENTS.md)「提交流程与协作边界」):
-```shell
-git -C zzz-od-test add test/ && git -C zzz-od-test commit -m "..."
-```
+测试文件现在在本仓 `tests/`,和代码一起提交,没有额外的提交步骤。(上游的测试在独立仓,主仓会忽略它;迁移完成前不要把上游测试仓 clone 进来后误当成本仓的一部分。)
 
 ## 8. 代码规范 / fixture 格式
 

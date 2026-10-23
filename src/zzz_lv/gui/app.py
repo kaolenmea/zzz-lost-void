@@ -62,6 +62,12 @@ try:
                 app_icon="logo.ico",
                 parent=parent,
             )
+            self._launch_finished: bool = False
+            self._app_setting_ready: bool = False
+            self.app_setting_manager.ready.connect(self._on_app_setting_ready)
+            release_version = os_utils.get_release_version()
+            if release_version is not None:
+                self.titleBar.setCodeVersion(f'v{release_version}')
             self.ctx.listen_event(ContextInstanceEventEnum.instance_active.value, self._on_instance_active_event)
             self._context_event_signal: ContextEventSignal = ContextEventSignal()
             self._context_event_signal.instance_changed.connect(self._on_instance_active_signal)
@@ -144,12 +150,13 @@ try:
             from one_dragon_qt.view.resource_management_interface import (
                 ResourceManagementInterface,
             )
+            self.resource_interface = ResourceManagementInterface(
+                self.ctx,
+                self.download_queue,
+                parent=self,
+            )
             self.add_sub_interface(
-                ResourceManagementInterface(
-                    self.ctx,
-                    self.download_queue,
-                    parent=self,
-                ),
+                self.resource_interface,
                 position=NavigationItemPosition.BOTTOM,
             )
 
@@ -178,6 +185,16 @@ try:
                 )
                 if nav_widget is not None:
                     nav_widget.setVisible(self.ctx.env_config.developer_mode)
+
+        def _apply_advanced_mode_visibility(self) -> None:
+            """没开高级设置时隐藏资源管理（发布包已带模型）。"""
+            super()._apply_advanced_mode_visibility()
+            if hasattr(self, 'resource_interface'):
+                nav_widget = self.navigationInterface.widget(
+                    self.resource_interface.objectName()
+                )
+                if nav_widget is not None:
+                    nav_widget.setVisible(self.ctx.env_config.advanced_mode)
 
         def _on_instance_active_event(self, event) -> None:
             """
@@ -208,6 +225,24 @@ try:
             self._check_first_run()
             self.check_resource_updates(force=True)
             self.on_welcome_dialog_closed()
+            self._launch_finished = True
+            self._maybe_show_first_guide()
+
+        def _on_app_setting_ready(self) -> None:
+            """应用注册完成 配置可以读写了"""
+            self._app_setting_ready = True
+            self._maybe_show_first_guide()
+
+        def _maybe_show_first_guide(self) -> None:
+            """发布包第一次运行时 弹出快速设置 窗口显示完且配置就绪后才弹"""
+            if not (self._launch_finished and self._app_setting_ready):
+                return
+            if self.ctx.env_config.advanced_mode or self.ctx.env_config.first_guide_done:
+                return
+            from zzz_lv.gui.view.home.first_run_guide_dialog import FirstRunGuideDialog
+            dialog = FirstRunGuideDialog(self.ctx, self)
+            dialog.exec()
+            self.ctx.env_config.first_guide_done = True
 
         def closeEvent(self, event: QCloseEvent) -> None:
             """窗口关闭事件"""
