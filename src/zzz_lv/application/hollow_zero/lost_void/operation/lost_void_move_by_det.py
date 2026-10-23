@@ -137,7 +137,7 @@ class LostVoidMoveByDet(ZOperation):
     AVOID_MAX_TURN: ClassVar[int] = 40  # 避障偏转时每次最多转多少 太小来不及转开
     ESCAPE_MAX_TURN: ClassVar[int] = 100  # 脱困横移时每次最多转多少 横移时目标横向漂得快 要跟得上
     AVOID_MAX_COLUMN_OFFSET: ClassVar[int] = 6  # 最多偏离目标几列 约 1/3 屏宽 避免把目标转出画面
-    ESCAPE_DEPTH_MIN_DIFF: ClassVar[int] = 40  # 脱困时左右两侧障碍平均行相差超过这个行数 才信深度模型 否则按图标所在一侧绕
+    ESCAPE_DEPTH_MIN_DIFF: ClassVar[int] = 20  # 脱困时左右两侧障碍平均行相差超过这个行数 才信深度模型 否则按图标所在一侧绕
     ESCAPE_TARGET_MIN_DX: ClassVar[int] = 10  # 脱困时目标图标偏离画面中心超过这个像素 才按图标所在一侧绕
     AVOID_NEAR_TARGET_SIZE: ClassVar[int] = 50  # 目标图标宽高超过这个值说明已经很近 不再避障 与到达判断的入口图标大小一致
 

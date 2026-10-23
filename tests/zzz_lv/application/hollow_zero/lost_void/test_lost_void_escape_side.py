@@ -15,7 +15,7 @@ def test_right_clearly_emptier_goes_right() -> None:
 
 
 def test_small_difference_returns_none() -> None:
-    assert LostVoidMoveByDet.pick_escape_side_by_depth([400, 410], [420, 430], MIN_DIFF) is None
+    assert LostVoidMoveByDet.pick_escape_side_by_depth([400, 405], [410, 415], MIN_DIFF) is None
 
 
 def test_empty_side_returns_none() -> None:
