@@ -137,6 +137,7 @@ class LostVoidMoveByDet(ZOperation):
     AVOID_MAX_TURN: ClassVar[int] = 40  # 避障偏转时每次最多转多少 太小来不及转开
     ESCAPE_MAX_TURN: ClassVar[int] = 100  # 脱困横移时每次最多转多少 横移时目标横向漂得快 要跟得上
     AVOID_MAX_COLUMN_OFFSET: ClassVar[int] = 6  # 最多偏离目标几列 约 1/3 屏宽 避免把目标转出画面
+    ESCAPE_DEPTH_MIN_DIFF: ClassVar[int] = 40  # 脱困时左右两侧障碍平均行相差超过这个行数 才信深度模型 否则按图标所在一侧绕
     ESCAPE_TARGET_MIN_DX: ClassVar[int] = 10  # 脱困时目标图标偏离画面中心超过这个像素 才按图标所在一侧绕
     AVOID_NEAR_TARGET_SIZE: ClassVar[int] = 50  # 目标图标宽高超过这个值说明已经很近 不再避障 与到达判断的入口图标大小一致
 
@@ -893,40 +894,61 @@ class LostVoidMoveByDet(ZOperation):
 
         return screenshot_time - self._scene_static_start_time >= LostVoidMoveByDet.SCENE_STATIC_SECONDS
 
+    @staticmethod
+    def pick_escape_side_by_depth(left_rows: list[int], right_rows: list[int], min_diff: float) -> bool | None:
+        """
+        按角色左右两侧各列障碍所在行 选更空的一侧 行越大障碍越近
+        @param left_rows: 左侧各列障碍所在行
+        @param right_rows: 右侧各列障碍所在行
+        @param min_diff: 两侧平均行相差不到这个值 认为分不出哪边更空
+        @return: True 往左 False 往右 分不出时返回 None
+        """
+        if len(left_rows) == 0 or len(right_rows) == 0:
+            return None
+        left_mean, right_mean = float(np.mean(left_rows)), float(np.mean(right_rows))
+        if abs(left_mean - right_mean) < min_diff:
+            return None
+        return left_mean < right_mean
+
     def _get_escape_side(self) -> bool | None:
         """
         本次寻路第一次脱困往哪边横移
-        1. 目标图标偏在画面中心哪一侧 就往哪一侧绕 入口在障碍物后面偏哪边 从那边绕路最短
-           比如第一层第一间入口正前方的路障 挡在身前看不到 但入口图标偏向哪边是知道的
-        2. 图标几乎正对中心或没有目标时 往深度模型看来更空(障碍更远)的一侧
+        1. 深度模型能看出左右两侧明显一边更空(障碍更远) 就往更空的一侧绕
+           比如第一层第一间右边入口前的路障 图标偏右 但右侧是路障和铁皮墙之间的窄死角 左侧才是通路
+        2. 深度模型没放置 / 看不出差别时 目标图标偏在画面中心哪一侧 就往哪一侧绕
+           入口在障碍物后面偏哪边 从那边绕路最短 这一条不依赖深度模型
         @return: True 往左 False 往右 都判断不了时返回 None 沿用原来的方向
         """
+        estimator = self.ctx.lost_void.depth_estimator
+        if estimator is not None:
+            rows = estimator.get_column_obstacle_rows(self.last_screenshot, self.last_screenshot_time)
+            if len(rows) > 0:
+                # 只比较角色两侧的列 角色所在的列看不到脚下
+                char_y1 = LostVoidDepthEstimator.CHARACTER_RECT[1]
+                center_x = self.ctx.controller.standard_width / 2
+                left_rows: list[int] = []
+                right_rows: list[int] = []
+                for i, row in enumerate(rows):
+                    if LostVoidDepthEstimator.get_scan_start(i) == char_y1:
+                        continue
+                    x1, x2 = LostVoidDepthEstimator.get_column_range(i)
+                    (left_rows if (x1 + x2) / 2 < center_x else right_rows).append(row)
+                depth_side = LostVoidMoveByDet.pick_escape_side_by_depth(
+                    left_rows, right_rows, LostVoidMoveByDet.ESCAPE_DEPTH_MIN_DIFF)
+                if len(left_rows) > 0 and len(right_rows) > 0:
+                    log.info('寻路脱困 深度判断 左侧障碍平均行%d 右侧%d %s',
+                             float(np.mean(left_rows)), float(np.mean(right_rows)),
+                             '往更空的一侧绕' if depth_side is not None else '差别不大 看目标图标')
+                if depth_side is not None:
+                    return depth_side
+
         target = self.last_target_result
         if target is not None:
             diff_x = target.entire_rect.center.x - self.ctx.controller.standard_width / 2
             if abs(diff_x) >= LostVoidMoveByDet.ESCAPE_TARGET_MIN_DX:
                 log.info('寻路脱困 目标偏%s %d像素 往目标一侧绕', '左' if diff_x < 0 else '右', abs(diff_x))
                 return diff_x < 0
-
-        estimator = self.ctx.lost_void.depth_estimator
-        if estimator is None:
-            return None
-        rows = estimator.get_column_obstacle_rows(self.last_screenshot, self.last_screenshot_time)
-        if len(rows) == 0:
-            return None
-        # 只比较角色两侧的列 角色所在的列看不到脚下
-        char_y1 = LostVoidDepthEstimator.CHARACTER_RECT[1]
-        center_x = self.ctx.controller.standard_width / 2
-        left_rows: list[int] = []
-        right_rows: list[int] = []
-        for i, row in enumerate(rows):
-            if LostVoidDepthEstimator.get_scan_start(i) == char_y1:
-                continue
-            x1, x2 = LostVoidDepthEstimator.get_column_range(i)
-            (left_rows if (x1 + x2) / 2 < center_x else right_rows).append(row)
-        left_mean, right_mean = float(np.mean(left_rows)), float(np.mean(right_rows))
-        log.info('寻路脱困 深度判断 左侧障碍平均行%d 右侧%d 往更空的一侧绕', left_mean, right_mean)
-        return left_mean <= right_mean
+        return None
 
     @node_from(from_name='移动', status='尝试脱困')
     @node_from(from_name='无目标处理', status='尝试脱困')
