@@ -116,9 +116,9 @@ Remove-Item Env:PYTHONPATH, Env:QT_QPA_PLATFORM
 if (-not $SkipZip) {
     $zipPath = Join-Path $distDir "$appName-v$Version.zip"
     if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-    # 用系统自带的 bsdtar 生成 zip（PATH 里可能先找到别的 tar）
-    $bsdtar = Join-Path $env:SystemRoot 'System32\tar.exe'
-    Invoke-Checked { & $bsdtar -a -c -f $zipPath -C $distDir $appName } '压缩'
+    # 用 .NET 生成 zip（支持大文件）；bsdtar 在 CI 机器上处理这个目录会崩溃
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::CreateFromDirectory($pkgDir, $zipPath, [System.IO.Compression.CompressionLevel]::Optimal, $true)
     Write-Host ("完成: {0} ({1:N0} MB)" -f $zipPath, ((Get-Item $zipPath).Length / 1MB))
 } else {
     Write-Host "完成: $pkgDir"
