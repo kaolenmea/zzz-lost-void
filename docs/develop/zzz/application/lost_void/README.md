@@ -144,7 +144,7 @@
 
 **层间移动 `LostVoidRunLevel`**(`lost_void_run_level.py`):核心循环 = `非战斗画面识别`(YOLO `detect_to_go` 找 感叹号/白点/下层入口,按优先级移动)→ `try_interact`(interact F)→ `handle_interact`(**按画面路由**:武备选择→`LostVoidChooseGear` / 通用选择→`LostVoidChooseCommon` / 邦布商店→`LostVoidBangbooStore` / 路径迭换→`LostVoidRouteChange` / 抽奖机→`LostVoidLottery` / 挑战结果→结算(标题被进度条盖住时用「总计用时」兜底,且要在对话判断之前) / 否则对话/黑屏兜底)→ `after_interact`。战斗走 `init_auto_op` → `in_battle`(自动战斗 + 识别脱战)。失败兜底:`handle_find_target_fail` → `push_error` → `fail_exit_lost_void`。
 
-**战斗结束判断**(`in_battle`,道中危机和终结之役以外的战斗):打完后会出现指向下一处的白点,下面带「23.5m」这样的距离文字(见[玩法文档](../../../../game/gameplay/迷失之地.md))。每 0.8 秒用 OCR 在 `战斗画面-距离显示区域` 读距离文字(`auto_battle_context.check_battle_distance`),读到一次就停止自动战斗、回到非战斗画面识别,和右上角「前往下一个区域」一样。只靠 YOLO 认白点时要置信度 0.9 且连续 10 次,战斗中镜头晃动很难满足;2026-10-22 实测复杂区域打完第一个房间后一直打空气,直到手动暂停。
+**战斗结束判断**(`in_battle`,道中危机和终结之役以外的战斗):打完后会出现指向下一处的白点,下面带「23.5m」这样的距离文字(见[玩法文档](../../../../game/gameplay/迷失之地.md))。每 0.8 秒用 OCR 在 `战斗画面-距离显示区域` 读距离文字(`auto_battle_context.check_battle_distance`),读到一次就停止自动战斗、回到非战斗画面识别,和右上角「前往下一个区域」一样。只靠 YOLO 认白点时要置信度 0.9 且连续 10 次,战斗中镜头晃动很难满足;2026-10-22 实测复杂区域打完第一个房间后一直打空气,直到手动暂停。排查迟迟不脱战时看日志里的「战斗诊断」行(`in_battle` 每 2 秒输出一次):区域、脱战计数、YOLO 交互/距离/入口命中、「前往下一个区域」OCR、距离 OCR、阵亡计数。
 
 **检测前涂黑界面**(`LostVoidDetector.mask_hud`,`HUD_MASK_RECT_LIST`):YOLO 推理前把容易被误检的界面区域涂黑,所有调用迷失之地检测的地方都生效。目前两块:左上角色头像;右上通知列前两条的圆形图标(见[画面文档「右侧通知列」](../../../../game/screens/迷失之地.md#迷失之地-大世界))。后者的来历:2026-10-22 寻路采样 5 局里,交互结束回到大世界后追感叹号时原地转 7 次没找到的有 13 次(每次约 19 秒),其中 6 次的首帧目标就是这个图标,另 6 次推测同因但截图没存下。离线用采样截图对比(`.debug/temp/hud_mask_check.py`,Windows 端):涂黑区域内的误检 24→0,其他 400 帧在涂黑区域外的识别没有变化。
 

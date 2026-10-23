@@ -131,6 +131,7 @@ class LostVoidRunLevel(ZOperation):
         self.current_frame_in_battle: bool = True  # 当前帧画面在战斗
         self.last_det_time: float = 0  # 上一次进行识别的时间
         self.not_in_battle_times: int = 0  # 识别到不在战斗的次数
+        self.last_battle_log_time: float = 0  # 上一次输出战斗诊断日志的时间
         self.last_check_finish_time: float = 0  # 上一次识别结束的时间
         self.talk_opt_idx = 0  # 交互选择的选项
         self.plan_route_on_update: bool = False  # 这次打开菜单时用地图规划本层路线
@@ -1181,6 +1182,9 @@ class LostVoidRunLevel(ZOperation):
                 self.last_det_time = self.last_screenshot_time
                 not_in_battle = False
                 found_next_region_hint = False
+                det_flags: tuple[bool, bool, bool] = (False, False, False)  # 交互 距离 入口 的识别结果
+                hint_text_found: bool = False  # OCR 是否识别到 前往下一个区域
+                distance_found: float | None = None  # OCR 识别到的距离
 
                 # 尝试识别下层入口 (道中危机 和 终结之役 不需要识别)
                 if self.region_type not in [LostVoidRegionType.ELITE, LostVoidRegionType.BOSS]:
@@ -1192,6 +1196,7 @@ class LostVoidRunLevel(ZOperation):
                             run_time=self.last_screenshot_time,
                         )
                         with_interact, with_distance, with_entry = self.detector.is_frame_with_all(frame_result)
+                        det_flags = (with_interact, with_distance, with_entry)
                         if with_interact or with_distance or with_entry:
                             not_in_battle = True
                     except Exception as e:
@@ -1216,6 +1221,7 @@ class LostVoidRunLevel(ZOperation):
                     area = self.ctx.screen_loader.get_area('迷失之地-大世界', '区域-文本提示')
                     found = screen_utils.find_by_ocr(self.ctx, self.last_screenshot, target_cn='前往下一个区域', area=area)
 
+                    hint_text_found = bool(found)
                     if found:
                         found_next_region_hint = True
                         not_in_battle = True
@@ -1226,8 +1232,18 @@ class LostVoidRunLevel(ZOperation):
                 if (not found_next_region_hint
                         and self.region_type not in [LostVoidRegionType.ELITE, LostVoidRegionType.BOSS]
                         and self.ctx.auto_battle_context.check_battle_distance(self.last_screenshot) is not None):
-                    log.info(f'战斗中识别到距离 {self.ctx.auto_battle_context.last_check_distance}m 判定战斗结束')
+                    distance_found = self.ctx.auto_battle_context.last_check_distance
+                    log.info(f'战斗中识别到距离 {distance_found}m 判定战斗结束')
                     found_next_region_hint = True
+
+                # 战斗节点静音 这里每 2 秒输出一次识别情况 用于排查迟迟不脱战
+                if self.last_screenshot_time - self.last_battle_log_time >= 2:
+                    self.last_battle_log_time = self.last_screenshot_time
+                    log.info(
+                        f'战斗诊断 区域={self.region_type.name} 脱战计数={self.not_in_battle_times} '
+                        f'本轮脱战={not_in_battle} 交互/距离/入口={det_flags} '
+                        f'下一区域提示={hint_text_found} 距离OCR={distance_found} 阵亡计数={self.agent_dead_times}'
+                    )
 
                 # "前往下一个区域" 或距离文字 单次命中即判脱战
                 if found_next_region_hint:
