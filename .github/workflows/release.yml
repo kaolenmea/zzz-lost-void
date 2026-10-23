@@ -51,5 +51,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # 优先用 release_notes/<标签>.md（中英文更新说明），没有才自动生成
+          $notes = '--generate-notes'
+          $notesFile = 'release_notes/${{ github.ref_name }}.md'
+          if (Test-Path $notesFile) { $notes = "--notes-file=$notesFile" }
           gh release create '${{ github.ref_name }}' (Get-ChildItem dist/ZZZLostVoid-v*.zip).FullName `
-            --title '${{ github.ref_name }}' --generate-notes
+            --title '${{ github.ref_name }}' $notes

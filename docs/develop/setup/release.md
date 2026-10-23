@@ -35,7 +35,7 @@ ZZZLostVoid\
 ## 用 GitHub 发布
 
 1. 一次性准备：把 `assets/models/` 整个目录压成 `models.zip`，在本仓库建一个标签叫 `models` 的 Release，把它传上去。工作流从这里取模型。
-2. 更新 `pyproject.toml` 的 `version`，在 `CHANGELOG.md` 写这一版的改动，提交。
+2. 更新 `pyproject.toml` 的 `version`，在 `CHANGELOG.md` 写这一版的改动，再写 `release_notes/v<版本>.md`（上半中文、下半英文，Release 页面直接用它），提交。没有这个文件时工作流退回自动生成的说明。
 3. 打标签并推送：`git tag v1.0.0 && git push origin v1.0.0`。`.github/workflows/release.yml` 会打包并创建同名 Release，附上 zip。
 
 ## 打包前要自己确认
