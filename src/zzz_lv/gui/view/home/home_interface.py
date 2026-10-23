@@ -329,7 +329,10 @@ class HomeInterface(VerticalScrollInterface):
         grid.set_value('挑战副本', config.effective_mission_name)
         grid.set_value('挑战配置', config.challenge_config)
         grid.set_value('刷取目标', config.extra_task)
-        grid.set_value('通关次数', f"{gt('本周')} {record.weekly_run_times}")
+        grid.set_value(
+            '通关次数',
+            f"{gt('本周')} {record.weekly_run_times}（{gt('本轮')} {record.plan_done_times}/{config.plan_run_times}）",
+        )
 
         self.lost_void_start_btn.setEnabled(True)
         if self.ctx.run_context.is_context_stop:
