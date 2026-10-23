@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Run tests
+        # 识别类测试需要本地放置的模型，CI 上只跑纯逻辑测试
+        run: uv run --env-file .env.sample pytest -m "not requires_models"
+
+      - name: Ruff check changed files
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          # 现有代码尚未全面适配 ruff，只检查这次 PR 改动的 Python 文件
+          git fetch origin ${{ github.base_ref }} --depth=1
+          files=$(git diff --name-only --diff-filter=d origin/${{ github.base_ref }}...HEAD -- '*.py')
+          if [ -n "$files" ]; then
+            uv run ruff check $files
+          fi
