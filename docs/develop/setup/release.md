@@ -48,3 +48,28 @@ ZZZLostVoid\
 
 - 启动器 exe 没有代码签名，Windows Defender 或其他杀毒软件可能提示风险。源码公开，可以自行用上面的脚本打包。
 - 包很大，主要是 PySide6（约 300 MB）和模型（约 200 MB）。
+
+## 程序内自动更新
+
+发布包启动约 2 秒后，后台请求 `https://api.github.com/repos/<owner>/<repo>/releases`（owner/repo 取自 `config/project.yml` 的 `github_homepage`），检查有没有比 `release.json` 里更新的版本。源码运行（没有 `release.json`）不检查。查询失败只写日志，不弹窗。
+
+选版本的规则（`app_update_utils.pick_latest_release`）：只看 tag 形如 `v1.2.3`、非草稿、非预发布、带 `ZZZLostVoid-v*.zip` 附件的 Release，取版本号最大的。放模型的 `models` Release 因此不会被当成新版本。
+
+有新版本时弹窗显示版本号和更新说明，点「立即更新」后：
+
+1. 下载 zip 到 `update/package.zip`，再解压到 `update/new/`，检查 `release.json`、`ZZZLostVoid.exe`、`python/`、`src/` 都在。下载走用户在资源管理里设置的代理（GitHub 代理前缀或个人代理）。需要至少 3 GB 空闲磁盘。
+2. 生成 `update/apply_update.ps1` 并在后台启动，程序随即退出。
+3. 脚本等程序退出后用新包覆盖，最后重新启动 `ZZZLostVoid.exe`。过程写入 `update/update.log`，失败会弹窗提示。
+
+覆盖规则：
+
+| 目录 | 做法 | 原因 |
+| --- | --- | --- |
+| `python/`、`src/` | 镜像同步，旧版本多出的文件会删掉 | `src/zzz_lv/application/` 里残留的旧文件会被程序当成应用加载 |
+| `assets/`、`plugins/` | 只覆盖和新增，不删 | 用户自定义背景图放在 `assets/ui/` |
+| `config/` | 只补新增文件，已有文件不动 | 保留用户配置 |
+| 根目录文件 | 直接覆盖，`release.json` 最后写 | 中途失败时 `release.json` 还是旧版本，下次启动会再次提示更新 |
+
+每次更新要下载完整包（约 570 MB）。`update/` 已在 `.gitignore` 里，下次更新开始时会清空。
+
+没在真实环境验证的部分：真实的 570 MB 下载、`python/` 目录在 Windows Defender 扫描时被占用导致 robocopy 重试的情况。覆盖脚本已在模拟目录上跑通。

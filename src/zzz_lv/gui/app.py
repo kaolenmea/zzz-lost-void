@@ -15,6 +15,7 @@ try:
     from one_dragon.utils import os_utils
     from one_dragon.utils.i18_utils import gt
     from one_dragon_qt.overlay.overlay_manager import OverlayManager
+    from one_dragon_qt.services.app_update_coordinator import AppUpdateCoordinator
     from one_dragon_qt.services.styles_manager import OdQtStyleSheet
     from one_dragon_qt.services.theme_manager import ThemeManager
     from one_dragon_qt.view.context_event_signal import ContextEventSignal
@@ -68,6 +69,7 @@ try:
             release_version = os_utils.get_release_version()
             if release_version is not None:
                 self.titleBar.setCodeVersion(f'v{release_version}')
+            self.app_update_coordinator: AppUpdateCoordinator = AppUpdateCoordinator(ctx, self)
             self.ctx.listen_event(ContextInstanceEventEnum.instance_active.value, self._on_instance_active_event)
             self._context_event_signal: ContextEventSignal = ContextEventSignal()
             self._context_event_signal.instance_changed.connect(self._on_instance_active_signal)
@@ -225,6 +227,7 @@ try:
             self._check_first_run()
             self.check_resource_updates(force=True)
             self.on_welcome_dialog_closed()
+            self.app_update_coordinator.check()
             self._launch_finished = True
             self._maybe_show_first_guide()
 
