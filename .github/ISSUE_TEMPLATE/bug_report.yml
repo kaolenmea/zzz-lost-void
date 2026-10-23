@@ -1,0 +1,39 @@
+name: Bug 反馈
+description: 运行出错、卡住、点错位置等问题
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请先看一下已有的 issue，并确认游戏分辨率是 1920×1080。
+  - type: input
+    id: version
+    attributes:
+      label: 软件版本
+      description: 免安装包写 Release 版本号；源码运行写 commit 号。
+    validations:
+      required: true
+  - type: dropdown
+    id: feature
+    attributes:
+      label: 出问题的功能
+      options:
+        - 迷失之地-战线肃清
+        - 迷失之地-特遣调查
+        - 迷失之地-矩阵行动
+        - 战斗助手
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么
+      description: 卡在哪个画面、期望的结果是什么。
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: 日志
+      description: 把程序目录下 `.log` 文件夹里最新的日志文件拖进来，或贴出出错前后的内容。
