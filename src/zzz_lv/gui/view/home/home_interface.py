@@ -7,6 +7,7 @@ from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
+    QSizePolicy,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
@@ -72,12 +73,17 @@ class InfoGrid(QWidget):
             key_label.setTextColor(*_SECONDARY_TEXT_COLOR)
             value_label = BodyLabel('-')
             value_label.setWordWrap(True)
-            layout.addWidget(key_label, row, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            layout.addWidget(value_label, row, 1, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            # 值标签不设对齐：带对齐时只拿到 sizeHint 宽度，自动换行的标签会被窄宽度折行，高度却按整列算，导致文字被截
+            value_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+            value_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding)
+            layout.addWidget(key_label, row, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+            layout.addWidget(value_label, row, 1)
             self._value_labels[key] = value_label
 
     def set_value(self, key: str, value: str) -> None:
-        self._value_labels[key].setText(value)
+        label = self._value_labels[key]
+        label.setText(value)
+        label.updateGeometry()
 
 
 class FeatureCard(SimpleCardWidget):
@@ -171,13 +177,13 @@ class ReadinessCard(SimpleCardWidget):
             return
 
         self.status_icon.setIcon(InfoBarIcon.WARNING)
-        self.status_title.setText(f"{gt('有')} {len(issues)} {gt('项需要处理')}")
+        self.status_title.setText(gt('有 {n} 项需要处理').format(n=len(issues)))
         self.status_desc.setText(gt('不处理也可以继续运行，但可能失败'))
         for message, target_name, sub_name in issues:
             row = QWidget()
             row_layout = QHBoxLayout(row)
             row_layout.setContentsMargins(0, 0, 0, 0)
-            row_layout.addWidget(BodyLabel(message), 1)
+            row_layout.addWidget(BodyLabel(gt(message)), 1)
             goto_btn = TransparentPushButton(FluentIcon.RIGHT_ARROW, gt('前往'))
             goto_btn.clicked.connect(
                 lambda _checked=False, t=target_name, s=sub_name: self._home.goto_interface(t, s)
@@ -326,12 +332,16 @@ class HomeInterface(VerticalScrollInterface):
             log.error('读取迷失之地配置失败', exc_info=True)
             return
 
-        grid.set_value('挑战副本', config.effective_mission_name)
-        grid.set_value('挑战配置', config.challenge_config)
-        grid.set_value('刷取目标', config.extra_task)
+        grid.set_value('挑战副本', gt(config.effective_mission_name))
+        grid.set_value('挑战配置', gt(config.challenge_config))
+        grid.set_value('刷取目标', gt(config.extra_task))
         grid.set_value(
             '通关次数',
-            f"{gt('本周')} {record.weekly_run_times}（{gt('本轮')} {record.plan_done_times}/{config.plan_run_times}）",
+            gt('本周 {week}（本轮 {done}/{plan}）').format(
+                week=record.weekly_run_times,
+                done=record.plan_done_times,
+                plan=config.plan_run_times,
+            ),
         )
 
         self.lost_void_start_btn.setEnabled(True)

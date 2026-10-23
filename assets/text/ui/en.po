@@ -1,3 +1,4 @@
+#
 msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -229,7 +230,6 @@ msgstr "UI Theme"
 
 msgid "主页公告"
 msgstr "Homepage Announcement"
-
 
 msgid "版本海报"
 msgstr "Version Poster"
@@ -744,3 +744,1071 @@ msgstr "Custom Homepage Background"
 
 msgid "设置后重启脚本生效"
 msgstr "Restart script for changes to take effect"
+
+msgid "撤回"
+msgstr "Undo"
+
+msgid "恢复"
+msgstr "Redo"
+
+msgid "历史记录"
+msgstr "History"
+
+msgid "Ctrl+Z 撤回，Ctrl+Shift+Z 恢复"
+msgstr "Ctrl+Z to undo, Ctrl+Shift+Z to redo"
+
+msgid "下载线程异常结束"
+msgstr "Download thread ended unexpectedly"
+
+msgid "下载完成"
+msgstr "Download complete"
+
+msgid "发现可下载资源"
+msgstr "Downloadable resources found"
+
+msgid "首次使用需要下载"
+msgstr "Required resources must be downloaded on first use"
+
+msgid "项资源"
+msgstr "resource(s)"
+
+msgid "模型文件缺失"
+msgstr "Model files missing"
+
+msgid "推荐版本更新"
+msgstr "Recommended version update"
+
+msgid "当前状态"
+msgstr "Status"
+
+msgid "暂停"
+msgstr "Pause"
+
+msgid "继续"
+msgstr "Resume"
+
+msgid "开始"
+msgstr "Start"
+
+msgid "停止"
+msgstr "Stop"
+
+msgid "应用通知"
+msgstr "App Notifications"
+
+msgid "资源管理"
+msgstr "Resources"
+
+msgid "下载设置"
+msgstr "Download Settings"
+
+msgid "下载源"
+msgstr "Download Source"
+
+msgid "自动模式优先使用上次成功源，失败后继续尝试其他源"
+msgstr "Auto mode tries the last successful source first, then falls back to others"
+
+msgid "代理设置"
+msgstr "Proxy Settings"
+
+msgid "为资源下载配置网络代理"
+msgstr "Configure a network proxy for resource downloads"
+
+msgid "自动获取免费代理地址"
+msgstr "Fetch Free Proxy Automatically"
+
+msgid "仅在使用 GitHub 代理时生效"
+msgstr "Only applies when using a GitHub proxy"
+
+msgid "立即获取"
+msgstr "Fetch Now"
+
+msgid "资源自动下载"
+msgstr "Auto Download Resources"
+
+msgid "发现资源缺失或有新版本时，跳过确认并自动下载"
+msgstr "Download automatically without confirmation when resources are missing or outdated"
+
+msgid "更新与下载"
+msgstr "Updates & Downloads"
+
+msgid "个人代理地址"
+msgstr "Personal Proxy URL"
+
+msgid "免费代理地址"
+msgstr "Free Proxy URL"
+
+msgid "应用"
+msgstr "App"
+
+msgid "节点"
+msgstr "Node"
+
+msgid "通知设置"
+msgstr "Notification Settings"
+
+msgid "通用"
+msgstr "General"
+
+msgid "合并模式失败节点立即通知"
+msgstr "Notify failed nodes immediately in merge mode"
+
+msgid "节点通知为全部合并时，失败节点会额外立即推送"
+msgstr "When node notifications are fully merged, failed nodes are also pushed immediately"
+
+msgid "自定义设置"
+msgstr "Personalization"
+
+msgid "语言调整后需要重启生效"
+msgstr "Restart required after changing the language"
+
+msgid "自定义主题色"
+msgstr "Custom Theme Color"
+
+msgid "关闭时使用默认蓝色"
+msgstr "Uses the default blue when off"
+
+msgid "选择颜色"
+msgstr "Choose Color"
+
+msgid "请选择主题色"
+msgstr "Please choose a theme color"
+
+msgid "脚本环境"
+msgstr "Script Environment"
+
+msgid "不清楚用途时建议保持默认，无法截图时再调整截图方法；下载代理在「资源管理」中设置"
+msgstr "Keep defaults if unsure; change the screenshot method only if capture fails. Download proxy is set under Resources"
+
+msgid "截图方法"
+msgstr "Screenshot Method"
+
+msgid "显示高级设置"
+msgstr "Show Advanced Settings"
+
+msgid "关闭后只显示常用设置，其余用默认值；已有配置不会改变"
+msgstr "When off, only common settings are shown and the rest use defaults; existing config is unchanged"
+
+msgid "开发者模式"
+msgstr "Developer Mode"
+
+msgid "关闭后隐藏开发工具和实验功能，已有配置不会改变"
+msgstr "When off, dev tools and experimental features are hidden; existing config is unchanged"
+
+msgid "开始、暂停、恢复某个应用"
+msgstr "Start, pause or resume an app"
+
+msgid "停止正在运行的应用，不能恢复"
+msgstr "Stop the running app (cannot be resumed)"
+
+msgid "用于开发、提交bug。会自动对UID打码，保存在 .debug/images/ 文件夹中"
+msgstr "For development and bug reports. UID is masked automatically; saved in .debug/images/"
+
+msgid "调试按钮"
+msgstr "Debug Button"
+
+msgid "用于开发，部分应用开始调试"
+msgstr "For development; starts debugging in some apps"
+
+msgid "警告"
+msgstr "Warning"
+
+msgid "确定要删除吗"
+msgstr "Are you sure you want to delete"
+
+msgid "测试当前方式"
+msgstr "Test Current"
+
+msgid "测试全部"
+msgstr "Test All"
+
+msgid "测试通知方式"
+msgstr "Test Notifications"
+
+msgid "发送测试消息验证通知配置"
+msgstr "Send a test message to verify notification settings"
+
+msgid "测试推送通知"
+msgstr "Test push notification"
+
+msgid "这是一条测试消息"
+msgstr "This is a test message"
+
+msgid "已向当前通知方式发送测试消息"
+msgstr "Test message sent via the current method"
+
+msgid "正在向所有已配置的通知方式发送测试消息..."
+msgstr "Sending test messages to all configured methods..."
+
+msgid "已向所有已配置的通知方式发送测试消息"
+msgstr "Test messages sent to all configured methods"
+
+msgid "请先配置 Webhook URL"
+msgstr "Please configure the Webhook URL first"
+
+msgid "Webhook URL 不能为空"
+msgstr "Webhook URL cannot be empty"
+
+msgid "cURL 命令已复制到剪贴板！"
+msgstr "cURL command copied to clipboard!"
+
+msgid "Webhook URL 未配置，无法推送"
+msgstr "Webhook URL not configured; cannot push"
+
+msgid "请求体不是合法的JSON格式"
+msgstr "Request body is not valid JSON"
+
+msgid "请求头不是合法的JSON格式"
+msgstr "Request headers are not valid JSON"
+
+msgid "配置运行通知的推送方式或渠道，所有已配置的渠道都会启用"
+msgstr "Configure how run notifications are pushed; all configured channels are enabled"
+
+msgid "PowerShell 风格"
+msgstr "PowerShell style"
+
+msgid "Unix 风格"
+msgstr "Unix style"
+
+msgid "生成 cURL 命令"
+msgstr "Generate cURL command"
+
+msgid "选择后自动填充相关配置"
+msgstr "Related settings are filled in automatically"
+
+msgid "添加应用"
+msgstr "Add App"
+
+msgid "节点通知"
+msgstr "Node Notifications"
+
+msgid "返回"
+msgstr "Back"
+
+msgid "原图"
+msgstr "Original"
+
+msgid "色彩通道分析"
+msgstr "Color Channel Analysis"
+
+msgid "颜色信息"
+msgstr "Color Info"
+
+msgid "坐标"
+msgstr "Coordinates"
+
+msgid "无有效颜色信息"
+msgstr "No valid color info"
+
+msgid "最新版本"
+msgstr "Latest version"
+
+msgid "取消中"
+msgstr "Cancelling"
+
+msgid "移除"
+msgstr "Remove"
+
+msgid "重试"
+msgstr "Retry"
+
+msgid "正在连接"
+msgstr "Connecting"
+
+msgid "失败"
+msgstr "Failed"
+
+msgid "等待中"
+msgstr "Waiting"
+
+msgid "正在解压"
+msgstr "Extracting"
+
+msgid "正在应用更新"
+msgstr "Applying update"
+
+msgid "正在取消"
+msgstr "Cancelling"
+
+msgid "已取消"
+msgstr "Cancelled"
+
+msgid "已完成"
+msgstr "Completed"
+
+msgid "暂无下载任务"
+msgstr "No download tasks"
+
+msgid "异常"
+msgstr "Error"
+
+msgid "请选择..."
+msgstr "Please select..."
+
+msgid "画中画"
+msgstr "Picture-in-Picture"
+
+msgid "画中画已关闭，点击开启后游戏切到后台自动显示画中画"
+msgstr "PiP is off. Turn it on to show PiP automatically when the game goes to the background"
+
+msgid "画中画已开启，游戏切到后台会自动显示，点击画中画切回游戏"
+msgstr "PiP is on. It appears when the game goes to the background; click it to switch back to the game"
+
+msgid "上次成功"
+msgstr "last successful"
+
+msgid "推荐"
+msgstr "recommended"
+
+msgid "自动"
+msgstr "Auto"
+
+msgid "可用资源更新"
+msgstr "Available Resource Updates"
+
+msgid "下载选中项"
+msgstr "Download Selected"
+
+msgid "稍后"
+msgstr "Later"
+
+msgid "未安装"
+msgstr "Not installed"
+
+msgid "已在队列"
+msgstr "In queue"
+
+msgid "重新下载"
+msgstr "Re-download"
+
+msgid "缺失或有新版本"
+msgstr "Missing or update available"
+
+msgid "以后自动下载，不再询问"
+msgstr "Download automatically from now on; don't ask again"
+
+msgid "应用设置"
+msgstr "App Settings"
+
+msgid "更多"
+msgstr "More"
+
+msgid "移到顶部"
+msgstr "Move to Top"
+
+msgid "已迁移"
+msgstr "Migrated"
+
+msgid "关闭后将从一条龙列表中永久移除"
+msgstr "Turning this off removes it from the list permanently"
+
+msgid "标题变量"
+msgstr "Title variable"
+
+msgid "内容变量"
+msgstr "Content variable"
+
+msgid "图片变量"
+msgstr "Image variable"
+
+msgid "时间戳 (2024-12-19 15:30:45)"
+msgstr "Timestamp (2024-12-19 15:30:45)"
+
+msgid "ISO时间戳 (2024-12-19T15:30:45)"
+msgstr "ISO timestamp (2024-12-19T15:30:45)"
+
+msgid "Unix时间戳 (1703004645)"
+msgstr "Unix timestamp (1703004645)"
+
+msgid "完整模板"
+msgstr "Full template"
+
+msgid "插入变量"
+msgstr "Insert variable"
+
+msgid "代码编辑器"
+msgstr "Code Editor"
+
+msgid "Python 脚本编辑器"
+msgstr "Python Script Editor"
+
+msgid "外部编辑"
+msgstr "Edit externally"
+
+msgid "请输入 JSON 格式的请求体"
+msgstr "Enter the request body in JSON"
+
+msgid "JSON 代码编辑器"
+msgstr "JSON Code Editor"
+
+msgid "下载资源成功"
+msgstr "Resources downloaded"
+
+msgid "下载已取消"
+msgstr "Download cancelled"
+
+msgid "下载资源失败 请尝试更换代理"
+msgstr "Download failed. Try changing the proxy"
+
+msgid "查看失败"
+msgstr "View failure"
+
+msgid "使用中"
+msgstr "In use"
+
+msgid "点此查看指南"
+msgstr "Open the guide"
+
+msgid "先看说明 再使用与提问"
+msgstr "Read the guide before using or asking questions"
+
+msgid "键"
+msgstr "Key"
+
+msgid "值"
+msgstr "Value"
+
+msgid "请输入密码"
+msgstr "Please enter the password"
+
+msgid "密码错误，请重新输入"
+msgstr "Wrong password, please try again"
+
+msgid "本软件仅供学习交流，使用产生的一切风险由使用者自行承担，开发者不提供售后服务。"
+msgstr "For learning and exchange only. Use at your own risk; the developer provides no after-sales support."
+
+msgid "开发者模式已开启"
+msgstr "Developer mode enabled"
+
+msgid "开发工具和实验功能现在可见"
+msgstr "Dev tools and experimental features are now visible"
+
+msgid "已加入下载队列"
+msgstr "Added to download queue"
+
+msgid "点击下载按钮查看进度"
+msgstr "Click the download button to see progress"
+
+msgid "下载仍在进行"
+msgstr "Downloads in progress"
+
+msgid "退出前需要取消正在进行的下载，是否取消全部任务？"
+msgstr "Downloads must be cancelled before exiting. Cancel all tasks?"
+
+msgid "ⓘ 代码版本 未知"
+msgstr "ⓘ Version unknown"
+
+msgid "下载"
+msgstr "Download"
+
+msgid "下载队列"
+msgstr "Download Queue"
+
+msgid "ⓘ 问题反馈"
+msgstr "ⓘ Feedback"
+
+msgid "已复制版本号"
+msgstr "Version copied"
+
+msgid "完成悬赏委托"
+msgstr "Complete Bounty Commissions"
+
+msgid "完成每周8000积分奖励"
+msgstr "Complete the weekly 8000-point reward"
+
+msgid "刷满业绩点"
+msgstr "Max Out Performance Points"
+
+msgid "刷满每周业绩点"
+msgstr "Max out weekly performance points"
+
+msgid "获取大部分菲林奖励"
+msgstr "Get Most Film Rewards"
+
+msgid "自动在战线肃清辅助收集所有首通和以太活性奖励；奖励仍需逐项核对，不能自动确认全部完成"
+msgstr "Automatically collects first-clear and Aether Activity rewards in Frontline Purge. Rewards still need manual checking; completion can't be confirmed automatically"
+
+msgid "难度一"
+msgstr "Difficulty 1"
+
+msgid "难度二"
+msgstr "Difficulty 2"
+
+msgid "难度三"
+msgstr "Difficulty 3"
+
+msgid "难度四"
+msgstr "Difficulty 4"
+
+msgid "难度五"
+msgstr "Difficulty 5"
+
+msgid "难度六"
+msgstr "Difficulty 6"
+
+msgid "需要游戏里已解锁难度六"
+msgstr "Difficulty 6 must be unlocked in the game"
+
+msgid "不选"
+msgstr "None"
+
+msgid "不选活性增幅 敌人强度不变 推荐"
+msgstr "No Aether Activity boost; enemy strength unchanged (recommended)"
+
+msgid "指定点数"
+msgstr "Specific points"
+
+msgid "选到指定的活性点数为止"
+msgstr "Select until the specified activity points are reached"
+
+msgid "自动选满"
+msgstr "Max out"
+
+msgid "尽量选满 9 点活性增幅 敌人会明显变强"
+msgstr "Select all 9 activity points if possible; enemies become much stronger"
+
+msgid "获取所有菲林奖励"
+msgstr "Get All Film Rewards"
+
+msgid "战线肃清"
+msgstr "Frontline Purge"
+
+msgid "通关效率"
+msgstr "Clear Efficiency"
+
+msgid "菲林收集"
+msgstr "Film Collection"
+
+msgid "终结"
+msgstr "Ultimate"
+
+msgid "异常·击破"
+msgstr "Anomaly · Daze"
+
+msgid "机敏"
+msgstr "Agile"
+
+msgid "绝境"
+msgstr "Desperate"
+
+msgid "携游"
+msgstr "Travel Companion"
+
+msgid "欢迎使用"
+msgstr "Welcome"
+
+msgid "前往配置"
+msgstr "Go to Settings"
+
+msgid "仍然继续"
+msgstr "Continue Anyway"
+
+msgid "运行前检查"
+msgstr "Pre-run Check"
+
+msgid "以下配置项未就绪，可能影响正常运行："
+msgstr "The following items are not ready and may affect running:"
+
+msgid "未设置游戏路径 - 无法自动启动游戏，请在「设置 → 游戏设置」中配置"
+msgstr "Game path not set - the game can't be launched automatically. Set it in Settings → Game Settings"
+
+msgid "迷失之地识别模型未下载 - 请在「资源管理」中下载"
+msgstr "Lost Void detection model not downloaded - download it in Resources"
+
+msgid "闪光识别模型未下载 - 请在「资源管理」中下载"
+msgstr "Polychrome detection model not downloaded - download it in Resources"
+
+msgid "闪避助手"
+msgstr "Dodge Assist"
+
+msgid "战斗助手"
+msgstr "Battle Assistant"
+
+msgid "后台模式（专享版）"
+msgstr "Background Mode (Exclusive)"
+
+msgid "仅控制当前功能是否临时启用后台模式；相关配置请前往「设置 → 游戏设置」调整"
+msgstr "Only toggles background mode for this feature; adjust related settings in Settings → Game Settings"
+
+msgid "高级设置"
+msgstr "Advanced Settings"
+
+msgid "GPU 运算、截图间隔等性能相关选项，一般保持默认即可"
+msgstr "GPU, screenshot interval and other performance options; defaults are usually fine"
+
+msgid "终结技一好就放"
+msgstr "Cast Ultimate when ready"
+
+msgid "终结技无视时机立刻释放"
+msgstr "Cast the Ultimate immediately regardless of timing"
+
+msgid "GPU运算"
+msgstr "GPU Acceleration"
+
+msgid "游戏画面掉帧的话 可以不启用"
+msgstr "Disable it if the game drops frames"
+
+msgid "截图间隔 (秒)"
+msgstr "Screenshot Interval (s)"
+
+msgid "一般默认0.02，除非电脑很卡。优先通过设置游戏30帧和低画质给AI留算力"
+msgstr "Default 0.02 is fine unless your PC lags. Prefer 30 FPS and low quality in-game to leave compute for the AI"
+
+msgid "BOSS战自动截图"
+msgstr "Auto Screenshot in Boss Fights"
+
+msgid "有BOSS血条时每秒存一张原图到 .debug/boss_screenshot，一张约2~3MB，收集完记得关"
+msgstr "Saves one raw frame per second to .debug/boss_screenshot while a boss HP bar is shown (~2-3 MB each). Remember to turn off when done"
+
+msgid "如何让AI打得更好？"
+msgstr "How to make the AI fight better?"
+
+msgid "使用说明"
+msgstr "User Guide"
+
+msgid "先看说明 再使用"
+msgstr "Read the guide before using"
+
+msgid "战斗配置"
+msgstr "Battle Config"
+
+msgid "全配队通用会自动为您的队伍匹配专属配队，遇到问题请反馈。"
+msgstr "\"All-team generic\" matches a dedicated config to your team automatically. Please report any problems."
+
+msgid "使用合并配置文件"
+msgstr "Use merged config file"
+
+msgid "关闭用于调试模板文件 正常开启即可"
+msgstr "Turn off only to debug template files; keep on normally"
+
+msgid "闪避方式"
+msgstr "Dodge Method"
+
+msgid "后台模式不可用"
+msgstr "Background mode unavailable"
+
+msgid "未检测到 vgamepad / ViGEmBus，请先安装虚拟手柄驱动"
+msgstr "vgamepad / ViGEmBus not detected; install the virtual gamepad driver first"
+
+msgid "输入状态关键词过滤..."
+msgstr "Filter by state keyword..."
+
+msgid "状态"
+msgstr "State"
+
+msgid "触发秒数"
+msgstr "Trigger (s)"
+
+msgid "状态值"
+msgstr "Value"
+
+msgid "前台-"
+msgstr "Foreground-"
+
+msgid "后台-"
+msgstr "Background-"
+
+msgid "[触发器]"
+msgstr "[Trigger]"
+
+msgid "[条件集]"
+msgstr "[Conditions]"
+
+msgid "[持续时间]"
+msgstr "[Duration]"
+
+msgid "迷失之地"
+msgstr "Lost Void"
+
+msgid "运行"
+msgstr "Run"
+
+msgid "刷取设置"
+msgstr "Farming Settings"
+
+msgid "刷取目标"
+msgstr "Farming Goal"
+
+msgid "挑战配置随目标自动切换"
+msgstr "Challenge config switches automatically with the goal"
+
+msgid "难度"
+msgstr "Difficulty"
+
+msgid "仅「获取大部分菲林奖励」生效；难度越高越难，难度六需要游戏里已解锁"
+msgstr "Only applies to \"Get Most Film Rewards\". Higher is harder; Difficulty 6 must be unlocked in-game"
+
+msgid "计划刷取次数"
+msgstr "Planned Runs"
+
+msgid "通关达到这个次数后停止，下次启动重新计数"
+msgstr "Stops after this many clears; the count resets next launch"
+
+msgid "活性增幅"
+msgstr "Aether Activity"
+
+msgid "仅「获取大部分菲林奖励」生效；活性越高敌人越强，不熟悉请保持「不选」"
+msgstr "Only applies to \"Get Most Film Rewards\". Higher activity means stronger enemies; keep \"None\" if unsure"
+
+msgid "活性点数"
+msgstr "Activity Points"
+
+msgid "「指定点数」时选到这个点数为止，未解锁的增幅不能选"
+msgstr "With \"Specific points\", selects until this value; locked boosts can't be chosen"
+
+msgid "重置记录"
+msgstr "Reset Record"
+
+msgid "不选择"
+msgstr "None"
+
+msgid "沿用游戏当前编队"
+msgstr "Keep the game's current team"
+
+msgid "战线肃清、特遣调查出战前选择游戏里的「编队 N」"
+msgstr "Selects in-game \"Team N\" before Frontline Purge / Task Force missions"
+
+msgid "正常跑完后执行；未打开游戏时会按设置里的游戏路径自动启动"
+msgstr "Runs after a normal finish; if the game isn't open it is launched from the configured game path"
+
+msgid "深度避障"
+msgstr "Depth Obstacle Avoidance"
+
+msgid "需要放置深度模型且有 GPU（只用 GPU 推理）；寻路时提前绕开障碍物，效果不好可关闭，回到撞墙后再脱困"
+msgstr "Needs the depth model and a GPU (GPU-only inference). Steers around obstacles early; turn off if it works poorly and fall back to bump-then-escape"
+
+msgid "随「获取大部分菲林奖励」目标自动选择战线肃清"
+msgstr "Frontline Purge is chosen automatically for the \"Get Most Film Rewards\" goal"
+
+msgid "完成"
+msgstr "Done"
+
+msgid "快速设置"
+msgstr "Quick Setup"
+
+msgid "开始前请确认：游戏分辨率为 1920×1080（窗口或全屏均可）；设置只问这三项，其余都用推荐值。"
+msgstr "Before starting, make sure the game resolution is 1920×1080 (windowed or fullscreen). Only these three settings are asked; the rest use recommended values."
+
+msgid "推荐「完成悬赏委托」；想刷首通和以太活性奖励选「获取大部分菲林奖励」"
+msgstr "\"Complete Bounty Commissions\" is recommended; choose \"Get Most Film Rewards\" for first-clear and Aether Activity rewards"
+
+msgid "通关达到这个次数后自动停止"
+msgstr "Stops automatically after this many clears"
+
+msgid "出战前自动选择游戏里的「编队 N」；不确定就保持「不选择」"
+msgstr "Selects in-game \"Team N\" before missions; keep \"None\" if unsure"
+
+msgid "准备就绪"
+msgstr "Ready"
+
+msgid "游戏路径和识别模型都已配置"
+msgstr "Game path and detection models are configured"
+
+msgid "不处理也可以继续运行，但可能失败"
+msgstr "You can run anyway, but it may fail"
+
+msgid "前往"
+msgstr "Go"
+
+msgid "主页"
+msgstr "Home"
+
+msgid "绝区零 迷失之地与战斗助手自动化"
+msgstr "Zenless Zone Zero Lost Void & Battle Assistant automation"
+
+msgid "自动进入迷失之地，完成选队、移动、选鸣徽与战斗"
+msgstr "Automatically enters Lost Void: team selection, movement, Resonium picks and combat"
+
+msgid "配置"
+msgstr "Settings"
+
+msgid "手动游玩时使用：自动战斗，或只在敌人攻击时自动闪避"
+msgstr "For manual play: auto battle, or dodge only when enemies attack"
+
+msgid "打开战斗助手"
+msgstr "Open Battle Assistant"
+
+msgid "快捷键"
+msgstr "Hotkeys"
+
+msgid "开始/暂停"
+msgstr "Start/Pause"
+
+msgid "可在「设置 → 脚本环境」中修改"
+msgstr "Change in Settings → Script Environment"
+
+msgid "加载中…"
+msgstr "Loading…"
+
+msgid "通关次数"
+msgstr "Clears"
+
+msgid "本周"
+msgstr "This week"
+
+msgid "本轮"
+msgstr "This run"
+
+msgid "查看运行"
+msgstr "View Run"
+
+msgid "后台模式"
+msgstr "Background Mode"
+
+msgid "开启"
+msgstr "On"
+
+msgid "关闭"
+msgstr "Off"
+
+msgid "设置说明"
+msgstr "About These Settings"
+
+msgid "游戏路径、输入方式等基础设置，建议首次使用前检查一遍"
+msgstr "Basic settings such as game path and input method; check them before first use"
+
+msgid "游戏"
+msgstr "Game"
+
+msgid "自动登录（可选）"
+msgstr "Auto Login (optional)"
+
+msgid "自动启动游戏后遇到登录界面时使用；游戏保持登录状态时不需要填写"
+msgstr "Used when a login screen appears after auto-launching; not needed if the game stays logged in"
+
+msgid "B服用户名"
+msgstr "Bilibili username"
+
+msgid "B服为选择已有登录记录的用户进行登录，需要先手动登录游戏"
+msgstr "Bilibili server logs in by picking an existing login record; log in manually once first"
+
+msgid "填写游戏中切换B服账号时显示的用户名"
+msgstr "Enter the username shown when switching Bilibili accounts in-game"
+
+msgid "强制重新登录"
+msgstr "Force re-login"
+
+msgid "开启后会使用上面的账号重新登录，关闭时直接使用游戏当前登录状态"
+msgstr "When on, logs in again with the account above; when off, uses the game's current login"
+
+msgid "启用 HDR"
+msgstr "Enable HDR"
+
+msgid "禁用 HDR"
+msgstr "Disable HDR"
+
+msgid "仅影响手动启动游戏，自动启动游戏时会自动禁用 HDR"
+msgstr "Only affects manual launches; HDR is disabled automatically when auto-launching"
+
+msgid "DX12 启动"
+msgstr "Launch with DX12"
+
+msgid "自动启动游戏时使用 DX12，与官方启动器勾选 DX12 相同"
+msgstr "Use DX12 when auto-launching, same as ticking DX12 in the official launcher"
+
+msgid "后台模式（测试版）"
+msgstr "Background Mode (Beta)"
+
+msgid "需要虚拟手柄驱动和 PrintWindow 截图方式。运行时会短暂抢占鼠标进行点击操作，无需游戏窗口置顶。请勿在前台玩支持手柄的游戏。"
+msgstr "Requires a virtual gamepad driver and the PrintWindow screenshot method. The mouse is briefly taken over for clicks; the game window needn't be on top. Don't play gamepad-enabled games in the foreground."
+
+msgid "后台手柄类型"
+msgstr "Background Gamepad Type"
+
+msgid "闪切时长（秒）"
+msgstr "Flash-switch Duration (s)"
+
+msgid "后台模式切换键鼠输入时的前台停留时长，过小可能切换失败"
+msgstr "How long the game stays in front when switching keyboard/mouse input in background mode; too small may fail"
+
+msgid "如果你不知道这是做什么的 请不要填写"
+msgstr "Leave blank if you don't know what this is"
+
+msgid "按键设置"
+msgstr "Key Bindings"
+
+msgid "键盘按键"
+msgstr "Keyboard Keys"
+
+msgid "自行调整，过小可能按键被吞，过大可能影响操作"
+msgstr "Adjust as needed: too small may drop key presses, too large may hurt control"
+
+msgid "OCR 耗时"
+msgstr "OCR time"
+
+msgid "YOLO 耗时"
+msgstr "YOLO time"
+
+msgid "CV Pipeline 耗时"
+msgstr "CV Pipeline time"
+
+msgid "节点轮次耗时"
+msgstr "Node round time"
+
+msgid "Overlay 刷新耗时"
+msgstr "Overlay refresh time"
+
+msgid "悬浮层"
+msgstr "Overlay"
+
+msgid "Overlay 是游戏窗口上的悬浮层，用于显示运行日志和状态，属于测试功能"
+msgstr "The Overlay floats over the game window to show logs and status. Experimental feature"
+
+msgid "Overlay 基础"
+msgstr "Overlay Basics"
+
+msgid "启用 Overlay"
+msgstr "Enable Overlay"
+
+msgid "启用后可通过 Ctrl+Alt+O 切换显隐"
+msgstr "Toggle visibility with Ctrl+Alt+O once enabled"
+
+msgid "显隐热键主键"
+msgstr "Toggle hotkey key"
+
+msgid "组合键固定 Ctrl+Alt，主键可自定义"
+msgstr "Modifier is fixed to Ctrl+Alt; the main key is customizable"
+
+msgid "默认显示"
+msgstr "Show by default"
+
+msgid "启动后 Overlay 是否默认可见"
+msgstr "Whether the Overlay is visible after launch"
+
+msgid "防截图保护"
+msgstr "Capture protection"
+
+msgid "使用 WDA_EXCLUDEFROMCAPTURE 隐藏 Overlay"
+msgstr "Hide the Overlay from screen capture using WDA_EXCLUDEFROMCAPTURE"
+
+msgid "显示日志面板"
+msgstr "Show log panel"
+
+msgid "显示状态面板"
+msgstr "Show status panel"
+
+msgid "视觉绘制"
+msgstr "Visual Drawing"
+
+msgid "启用视觉层"
+msgstr "Enable visual layer"
+
+msgid "显示 YOLO/OCR/Template/CV 绘制结果"
+msgstr "Show YOLO/OCR/Template/CV drawing results"
+
+msgid "显示 YOLO"
+msgstr "Show YOLO"
+
+msgid "显示 OCR"
+msgstr "Show OCR"
+
+msgid "显示 Template"
+msgstr "Show Template"
+
+msgid "显示 CV Pipeline"
+msgstr "Show CV Pipeline"
+
+msgid "视觉层 X 偏移"
+msgstr "Visual layer X offset"
+
+msgid "用于校正识别框左右偏移（像素）"
+msgstr "Corrects horizontal offset of detection boxes (px)"
+
+msgid "视觉层 Y 偏移"
+msgstr "Visual layer Y offset"
+
+msgid "用于校正识别框上下偏移（像素）"
+msgstr "Corrects vertical offset of detection boxes (px)"
+
+msgid "视觉层 X 缩放"
+msgstr "Visual layer X scale"
+
+msgid "视觉层 Y 缩放"
+msgstr "Visual layer Y scale"
+
+msgid "调试面板"
+msgstr "Debug Panels"
+
+msgid "显示决策链路面板"
+msgstr "Show decision chain panel"
+
+msgid "显示时间轴面板"
+msgstr "Show timeline panel"
+
+msgid "显示性能面板"
+msgstr "Show performance panel"
+
+msgid "面板位置、字体、透明度和刷新间隔"
+msgstr "Panel position, font, opacity and refresh interval"
+
+msgid "面板编辑模式"
+msgstr "Panel edit mode"
+
+msgid "开启后可拖拽调整位置，并可在日志窗调整字体/透明度"
+msgstr "Drag panels to reposition; adjust font/opacity in the log window"
+
+msgid "面板字体大小"
+msgstr "Panel font size"
+
+msgid "文字颜色"
+msgstr "Text color"
+
+msgid "Hex 颜色，例如 #f2f2f2"
+msgstr "Hex color, e.g. #f2f2f2"
+
+msgid "日志最大行数"
+msgstr "Max log lines"
+
+msgid "日志过期秒数"
+msgstr "Log expiry (s)"
+
+msgid "窗口跟随间隔(ms)"
+msgstr "Window follow interval (ms)"
+
+msgid "状态刷新间隔(ms)"
+msgstr "State refresh interval (ms)"
+
+msgid "面板透明度(%)"
+msgstr "Panel opacity (%)"
+
+msgid "重置面板位置"
+msgstr "Reset panel positions"
+
+msgid "重置 Overlay 面板到默认位置与尺寸"
+msgstr "Reset Overlay panels to default position and size"
+
+msgid "性能指标"
+msgstr "Performance Metrics"
+
+msgid "截图"
+msgstr "Screenshot"
+
+msgid "保存 patched 合成图"
+msgstr "Save patched composite"
+
+msgid "保留原截图与剪贴板行为，额外输出一张叠加 Overlay 的图片"
+msgstr "Keeps the original screenshot and clipboard behavior and also outputs an image with the Overlay"
+
+msgid "patched 文件后缀"
+msgstr "Patched file suffix"
+
+msgid "默认 _patched"
+msgstr "Default: _patched"
+
+msgid "Overlay 不可用"
+msgstr "Overlay unavailable"
+
+msgid "系统版本低于 Windows 10 2004，Overlay 已禁用"
+msgstr "Windows version is older than 10 2004; Overlay is disabled"
+
+msgid "已重置"
+msgstr "Reset done"
+
+msgid "Overlay 面板位置已重置"
+msgstr "Overlay panel positions reset"
+
+msgid "有 {n} 项需要处理"
+msgstr "{n} item(s) need attention"
+
+msgid "本周 {week}（本轮 {done}/{plan}）"
+msgstr "This week {week} (this run {done}/{plan})"
