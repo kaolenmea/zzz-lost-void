@@ -568,7 +568,7 @@ class LostVoidMoveByDet(ZOperation):
     def _get_avoid_aim_x(self, target_result: MoveTargetWrapper) -> float | None:
         """
         深度模型判断目标方向近处有立着的东西时 返回改为瞄准的横坐标
-        往两侧找最近的不挡路列 两侧都有时取障碍更远的一侧
+        在目标附近按「障碍距离 + 偏离目标的列数」挑代价最小的不挡路列 上次选的列还合适就继续用
         角色所在的列只能从头顶往上看 正前方脚下的障碍看不到 这时不会触发
         :param target_result: 当前移动目标
         :return: 不需要避障时返回 None
@@ -581,16 +581,8 @@ class LostVoidMoveByDet(ZOperation):
         if estimator is not None and not is_near_target:
             rows = estimator.get_column_obstacle_rows(self.last_screenshot, self.last_screenshot_time)
             target_idx = LostVoidDepthEstimator.get_column_idx(target_rect.center.x)
-            if len(rows) > 0 and LostVoidDepthEstimator.is_near_blocked(rows[target_idx]):
-                for offset in range(1, LostVoidMoveByDet.AVOID_MAX_COLUMN_OFFSET + 1):
-                    open_idx_list = [
-                        i for i in (target_idx - offset, target_idx + offset)
-                        if 0 <= i < len(rows) and not LostVoidDepthEstimator.is_near_blocked(rows[i])
-                    ]
-                    if len(open_idx_list) > 0:
-                        # 两侧都空时 取障碍更远(行更靠上)的一侧
-                        avoid_idx = min(open_idx_list, key=lambda i: rows[i])
-                        break
+            avoid_idx = LostVoidDepthEstimator.choose_aim_column(
+                rows, target_idx, self._avoid_column_idx, LostVoidMoveByDet.AVOID_MAX_COLUMN_OFFSET)
 
         if avoid_idx != self._avoid_column_idx:
             if avoid_idx is None:

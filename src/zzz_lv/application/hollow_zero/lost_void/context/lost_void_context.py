@@ -290,7 +290,7 @@ class LostVoidContext:
 
     def init_depth_model(self, enabled: bool) -> None:
         """
-        初始化寻路避障用的深度模型 GPU 开关跟随迷失之地识别模型
+        初始化寻路避障用的深度模型 只用 GPU 推理 没有 GPU 时不启用
         :param enabled: 是否开启深度避障
         """
         if not enabled:
@@ -300,10 +300,13 @@ class LostVoidContext:
             self.depth_estimator = None
             log.info('深度避障 | 未放置深度模型 寻路不避障')
             return
+        if not LostVoidDepthEstimator.is_gpu_available():
+            self.depth_estimator = None
+            log.info('深度避障 | 没有可用的 GPU 深度模型只用 GPU 推理 寻路不避障')
+            return
 
-        use_gpu = self.ctx.model_config.lost_void_det_gpu
-        if self.depth_estimator is None or self.depth_estimator.gpu != use_gpu:
-            self.depth_estimator = LostVoidDepthEstimator(gpu=use_gpu)
+        if self.depth_estimator is None:
+            self.depth_estimator = LostVoidDepthEstimator()
 
     def get_auto_op_name(self) -> str:
         """

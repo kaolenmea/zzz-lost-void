@@ -143,7 +143,7 @@ class LostVoidRunInterface(SplitAppRunInterface):
 
         self.depth_avoid_opt = SwitchSettingCard(
             icon=FluentIcon.MOVE, title='深度避障',
-            content='需要放置深度模型；寻路时提前绕开障碍物，效果不好可关闭，回到撞墙后再脱困',
+            content='需要放置深度模型且有 GPU（只用 GPU 推理）；寻路时提前绕开障碍物，效果不好可关闭，回到撞墙后再脱困',
         )
         run_group.addSettingCard(self.depth_avoid_opt)
 

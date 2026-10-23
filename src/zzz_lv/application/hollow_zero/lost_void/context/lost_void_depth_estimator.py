@@ -3,6 +3,7 @@ from typing import ClassVar
 
 import cv2
 import numpy as np
+import onnxruntime as ort
 from cv2.typing import MatLike
 
 from one_dragon.utils import yolo_config_utils
@@ -51,17 +52,19 @@ class LostVoidDepthEstimator(OnnxModelLoader):
 
     MIN_INTERVAL: ClassVar[float] = 0.3  # 两次推理的最小间隔 期间复用上次结果
 
-    def __init__(self, gpu: bool = False):
+    AIM_DIR_COST: ClassVar[int] = 15  # 选瞄准列时 每偏离目标一列相当于障碍近多少行
+    AIM_KEEP_MARGIN: ClassVar[int] = 30  # 上次选的列仍不挡路 且代价比最优列多不超过这么多 就继续用 避免左右来回摆
+
+    def __init__(self):
         """
-        调用前先用 is_model_existed 确认模型已放置 不走自动下载
-        :param gpu: 是否启用GPU运算
+        只用 GPU 推理 调用前先用 is_gpu_available 确认有 GPU 提供程序 用 is_model_existed 确认模型已放置 不走自动下载
         """
         OnnxModelLoader.__init__(
             self,
             model_name=LostVoidDepthEstimator.MODEL_NAME,
             model_download_url='',
             model_parent_dir_path=yolo_config_utils.get_model_category_dir(LostVoidDepthEstimator.MODEL_CATEGORY),
-            gpu=gpu,
+            gpu=True,
         )
 
         self._last_run_time: float = 0  # 上一次推理的时间
@@ -74,6 +77,44 @@ class LostVoidDepthEstimator(OnnxModelLoader):
         """
         model_dir = Path(yolo_config_utils.get_model_category_dir(LostVoidDepthEstimator.MODEL_CATEGORY))
         return (model_dir / LostVoidDepthEstimator.MODEL_NAME / 'model.onnx').exists()
+
+    @staticmethod
+    def is_gpu_available() -> bool:
+        """
+        是否有可用的 GPU 执行提供程序 OnnxModelLoader 没有时会悄悄退回 CPU 深度模型每帧都要推理 CPU 跑不动 所以这里要提前判断
+        """
+        availables = ort.get_available_providers()
+        return 'CUDAExecutionProvider' in availables or 'DmlExecutionProvider' in availables
+
+    @staticmethod
+    def choose_aim_column(rows: list[int], target_idx: int, prev_idx: int | None, max_offset: int) -> int | None:
+        """
+        目标所在的列近处挡路时 在目标附近挑一列作为瞄准点
+        每一列的代价 = 障碍所在行(越大越近) + 偏离目标的列数 × AIM_DIR_COST 取代价最小的不挡路列
+        上次选的列还不挡路 且代价和最优列相差不大时继续用它 避免来回摆
+        角色所在的列只能从头顶往上看 看不到脚下 不作为候选
+        :param rows: 每列障碍所在行 get_column_obstacle_rows 的结果
+        :param target_idx: 目标所在的列
+        :param prev_idx: 上次选的列 没有时为空
+        :param max_offset: 最多偏离目标几列
+        :return: 目标所在列不挡路 或者附近没有不挡路的列时返回 None 不需要偏转
+        """
+        if len(rows) == 0 or not LostVoidDepthEstimator.is_near_blocked(rows[target_idx]):
+            return None
+
+        char_y1 = LostVoidDepthEstimator.CHARACTER_RECT[1]
+        cost_map: dict[int, int] = {}
+        for i in range(max(target_idx - max_offset, 0), min(target_idx + max_offset, len(rows) - 1) + 1):
+            if LostVoidDepthEstimator.is_near_blocked(rows[i]) or LostVoidDepthEstimator.get_scan_start(i) == char_y1:
+                continue
+            cost_map[i] = rows[i] + abs(i - target_idx) * LostVoidDepthEstimator.AIM_DIR_COST
+        if len(cost_map) == 0:
+            return None
+
+        best_idx = min(cost_map, key=lambda i: cost_map[i])
+        if prev_idx in cost_map and cost_map[prev_idx] <= cost_map[best_idx] + LostVoidDepthEstimator.AIM_KEEP_MARGIN:
+            return prev_idx
+        return best_idx
 
     def estimate_disparity(self, screen: MatLike) -> np.ndarray:
         """
