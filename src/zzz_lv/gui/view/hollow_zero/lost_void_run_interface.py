@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PySide6.QtWidgets import QWidget
-from qfluentwidgets import FluentIcon, MessageBox, PushSettingCard, SettingCardGroup
+from qfluentwidgets import FluentIcon, PushSettingCard, SettingCardGroup
 
 from one_dragon.base.config.config_item import ConfigItem
 from one_dragon.base.config.one_dragon_config import AfterDoneOpEnum
@@ -107,14 +107,6 @@ class LostVoidRunInterface(SplitAppRunInterface):
         self.run_record_opt.clicked.connect(self._on_reset_record_clicked)
         task_group.addSettingCard(self.run_record_opt)
 
-        self.polychrome_help_opt = PushSettingCard(
-            icon=FluentIcon.INFO, title='战线肃清奖励核对', text=gt('查看待核对项目'),
-            content='目前辅助收集，尚不能自动确认全部奖励',
-        )
-        self.polychrome_help_opt.clicked.connect(self._show_polychrome_checklist)
-        task_group.addSettingCard(self.polychrome_help_opt)
-        self.polychrome_help_opt.setVisible(False)
-
         team_group = SettingCardGroup(gt('预备编队'))
         left.add_widget(team_group)
 
@@ -213,29 +205,14 @@ class LostVoidRunInterface(SplitAppRunInterface):
         self.mission_opt.setValue(self.config.effective_mission_name, emit_signal=False)
         self.mission_opt.setEnabled(not self.config.is_polychrome_mode)
         self.mission_opt.setContent('随战线肃清目标自动选择（难度五）' if self.config.is_polychrome_mode else '')
-        self.polychrome_help_opt.setVisible(self.config.is_polychrome_mode)
-        if self.config.is_polychrome_mode:
-            content = self.run_record.polychrome_notice or '辅助收集；全部奖励尚未自动核对'
+        if self.config.is_polychrome_mode and self.run_record.polychrome_notice:
+            content = self.run_record.polychrome_notice
         elif self.run_record.is_finished:
             content = f'本周已完成「{self.config.extra_task}」 如错误可重置'
         else:
             content = f'本周通关次数: {self.run_record.weekly_run_times}'
         content += f'；本轮已刷 {self.run_record.plan_done_times} / 计划 {self.config.plan_run_times} 次'
         self.run_record_opt.setContent(content)
-
-    def _show_polychrome_checklist(self) -> None:
-        """展示当前仍需在游戏内核对的奖励，不提供手工完成开关。"""
-        content = (
-            '当前在战线肃清·难度五自动推进战略、通用武备和 NEW 藏品收集：\n'
-            '开局武备同派系优先，路线优先武备格、限时格、金币格，偶遇事件多张 NEW 卡牌时重开本间再拿。\n'
-            '找不到可刷战略不代表奖励已拿完。\n\n'
-            '以下奖励尚未接入完整的进度识别与领取，或需要手动完成：\n'
-            + '\n'.join(f'• {item}' for item in lost_void_const.POLYCHROME_REWARD_CHECKLIST)
-        )
-        dialog = MessageBox(gt('战线肃清奖励待核对项目'), content, self.window())
-        dialog.cancelButton.hide()
-        dialog.yesButton.setText(gt('知道了'))
-        dialog.exec()
 
     def _on_reset_record_clicked(self) -> None:
         self.run_record.reset_record()

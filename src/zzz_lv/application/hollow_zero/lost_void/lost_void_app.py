@@ -100,8 +100,7 @@ class LostVoidApp(ZApplication):
         if self.config.is_polychrome_mode:
             self.run_record.polychrome_notice = ''
             log.info('菲林目标自动选择战线肃清·%s', lost_void_const.POLYCHROME_DIFFICULTY)
-            log.info('当前仅辅助收集，不能自动确认全部菲林奖励；待核对：%s',
-                     '；'.join(lost_void_const.POLYCHROME_REWARD_CHECKLIST))
+            log.info('当前仅辅助收集，不能自动确认全部菲林奖励')
 
         try:
             # 这里会加载迷失之洞的数据 识别模型 和自动战斗配置
@@ -533,7 +532,7 @@ class LostVoidApp(ZApplication):
     def _stop_polychrome_collection(self, reason: str) -> OperationRoundResult:
         """保存待核对原因，返回大世界后按未完成结束。"""
         self.run_record.polychrome_notice = reason
-        log.warning('%s；待核对：%s', reason, '；'.join(lost_void_const.POLYCHROME_REWARD_CHECKLIST))
+        log.warning(reason)
         return self.round_success(LostVoidApp.STATUS_POLYCHROME_REVIEW)
 
     def _swipe_strategy_list(self, towards_right: bool = True) -> None:
