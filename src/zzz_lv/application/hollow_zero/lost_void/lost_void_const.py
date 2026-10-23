@@ -4,7 +4,7 @@ DEFAULT_GROUP = True
 PRIORITY = 1110
 NEED_NOTIFY = True
 
-# 菲林目标使用的战线肃清难度
+# 菲林目标默认使用的战线肃清难度
 POLYCHROME_DIFFICULTY = '难度五'
 
 # 战线肃清 3 层 每层末尾 道中危机 → 挚交会谈 第 3 次挚交会谈之后就是终结之役 是最后一个休息区

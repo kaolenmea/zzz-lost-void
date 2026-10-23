@@ -32,6 +32,7 @@ from zzz_lv.application.hollow_zero.lost_void.lost_void_config import (
     PLAN_RUN_TIMES_MIN,
     LostVoidAetherActivityModeEnum,
     LostVoidConfig,
+    LostVoidDifficultyEnum,
     LostVoidTaskEnum,
 )
 from zzz_lv.application.hollow_zero.lost_void.lost_void_run_record import (
@@ -80,6 +81,13 @@ class LostVoidRunInterface(SplitAppRunInterface):
         self.task_type_opt.value_changed.connect(self._update_aether_enabled)
         task_group.addSettingCard(self.task_type_opt)
 
+        self.difficulty_opt = ComboBoxSettingCard(
+            icon=FluentIcon.SPEED_HIGH, title='难度',
+            content='仅「获取大部分菲林奖励」生效；难度越高越难，难度六需要游戏里已解锁',
+            options_enum=LostVoidDifficultyEnum,
+        )
+        task_group.addSettingCard(self.difficulty_opt)
+
         self.plan_run_times_opt = SpinBoxSettingCard(
             icon=FluentIcon.SYNC, title='计划刷取次数',
             content='通关达到这个次数后停止，下次启动重新计数',
@@ -90,7 +98,7 @@ class LostVoidRunInterface(SplitAppRunInterface):
 
         self.aether_mode_opt = ComboBoxSettingCard(
             icon=FluentIcon.SPEED_HIGH, title='活性增幅',
-            content='仅战线肃清生效；活性越高敌人越强，不熟悉请保持「不选」',
+            content='仅「获取大部分菲林奖励」生效；活性越高敌人越强，不熟悉请保持「不选」',
             options_enum=LostVoidAetherActivityModeEnum,
         )
         self.aether_mode_opt.value_changed.connect(self._update_aether_target_enabled)
@@ -162,6 +170,7 @@ class LostVoidRunInterface(SplitAppRunInterface):
         self.mission_opt.init_with_adapter(get_prop_adapter(self.config, 'effective_mission_name'))
         self.task_type_opt.init_with_adapter(get_prop_adapter(self.config, 'extra_task'))
         self.team_no_opt.init_with_adapter(get_prop_adapter(self.config, 'predefined_team_no'))
+        self.difficulty_opt.init_with_adapter(get_prop_adapter(self.config, 'polychrome_difficulty'))
         self.plan_run_times_opt.init_with_adapter(get_prop_adapter(self.config, 'plan_run_times'))
         self.aether_mode_opt.init_with_adapter(get_prop_adapter(self.config, 'aether_activity_mode'))
         self.aether_target_opt.init_with_adapter(get_prop_adapter(self.config, 'aether_activity_target'))
@@ -181,7 +190,8 @@ class LostVoidRunInterface(SplitAppRunInterface):
         self.depth_avoid_opt.setVisible(advanced)
 
     def _update_aether_enabled(self) -> None:
-        """活性增幅只在战线肃清生效 点数只在「指定点数」时有用"""
+        """难度和活性增幅只在菲林目标生效 点数只在「指定点数」时有用"""
+        self.difficulty_opt.setEnabled(self.config.is_polychrome_mode)
         self.aether_mode_opt.setEnabled(self.config.is_polychrome_mode)
         self._update_aether_target_enabled()
 
@@ -204,7 +214,7 @@ class LostVoidRunInterface(SplitAppRunInterface):
         """刷新当前目标的副本和运行状态。"""
         self.mission_opt.setValue(self.config.effective_mission_name, emit_signal=False)
         self.mission_opt.setEnabled(not self.config.is_polychrome_mode)
-        self.mission_opt.setContent('随战线肃清目标自动选择（难度五）' if self.config.is_polychrome_mode else '')
+        self.mission_opt.setContent('随「获取大部分菲林奖励」目标自动选择战线肃清' if self.config.is_polychrome_mode else '')
         if self.config.is_polychrome_mode and self.run_record.polychrome_notice:
             content = self.run_record.polychrome_notice
         elif self.run_record.is_finished:

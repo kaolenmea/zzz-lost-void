@@ -2,13 +2,24 @@ from enum import Enum
 
 from one_dragon.base.config.config_item import ConfigItem
 from one_dragon.base.operation.application.application_config import ApplicationConfig
+from zzz_lv.application.hollow_zero.lost_void import lost_void_const
 
 
 class LostVoidTaskEnum(Enum):
 
     BOUNTY_COMMISSION = ConfigItem('完成悬赏委托', desc='完成每周8000积分奖励')
     EVAL_POINT = ConfigItem('刷满业绩点', desc='刷满每周业绩点')
-    POLYCHROME = ConfigItem('战线肃清', desc='自动在战线肃清·难度五辅助收集所有首通和以太活性奖励；奖励仍需逐项核对，不能自动确认全部完成')
+    POLYCHROME = ConfigItem('获取大部分菲林奖励', desc='自动在战线肃清辅助收集所有首通和以太活性奖励；奖励仍需逐项核对，不能自动确认全部完成')
+
+
+class LostVoidDifficultyEnum(Enum):
+
+    LEVEL_1 = ConfigItem('难度一')
+    LEVEL_2 = ConfigItem('难度二')
+    LEVEL_3 = ConfigItem('难度三')
+    LEVEL_4 = ConfigItem('难度四')
+    LEVEL_5 = ConfigItem('难度五')
+    LEVEL_6 = ConfigItem('难度六', desc='需要游戏里已解锁难度六')
 
 
 class LostVoidAetherActivityModeEnum(Enum):
@@ -21,6 +32,7 @@ class LostVoidAetherActivityModeEnum(Enum):
 # 旧版本保存过的刷取目标名 读取时迁移成新名字
 LEGACY_EXTRA_TASK_NAME: dict[str, str] = {
     '获取所有菲林奖励': LostVoidTaskEnum.POLYCHROME.value.value,
+    '战线肃清': LostVoidTaskEnum.POLYCHROME.value.value,
 }
 
 PLAN_RUN_TIMES_MIN: int = 1
@@ -62,6 +74,17 @@ class LostVoidConfig(ApplicationConfig):
     @property
     def is_polychrome_mode(self) -> bool:
         return self.extra_task == LostVoidTaskEnum.POLYCHROME.value.value
+
+    @property
+    def polychrome_difficulty(self) -> str:
+        """「获取大部分菲林奖励」在战线肃清里选的难度 默认难度五"""
+        value = self.get('polychrome_difficulty', lost_void_const.POLYCHROME_DIFFICULTY)
+        valid_list = [i.value.value for i in LostVoidDifficultyEnum]
+        return value if value in valid_list else lost_void_const.POLYCHROME_DIFFICULTY
+
+    @polychrome_difficulty.setter
+    def polychrome_difficulty(self, new_value: str) -> None:
+        self.update('polychrome_difficulty', new_value)
 
     @property
     def mission_name(self) -> str:

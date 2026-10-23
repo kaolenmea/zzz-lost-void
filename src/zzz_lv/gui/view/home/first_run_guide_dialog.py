@@ -57,7 +57,7 @@ class FirstRunGuideDialog(MessageBoxBase):
 
         self.task_type_opt = ComboBoxSettingCard(
             icon=FluentIcon.FLAG, title='刷取目标',
-            content='推荐「完成悬赏委托」；想刷首通和以太活性奖励选「战线肃清」',
+            content='推荐「完成悬赏委托」；想刷首通和以太活性奖励选「获取大部分菲林奖励」',
             options_enum=LostVoidTaskEnum,
         )
         self.task_type_opt.init_with_adapter(get_prop_adapter(config, 'extra_task'))

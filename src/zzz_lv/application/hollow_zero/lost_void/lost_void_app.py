@@ -99,7 +99,7 @@ class LostVoidApp(ZApplication):
 
         if self.config.is_polychrome_mode:
             self.run_record.polychrome_notice = ''
-            log.info('菲林目标自动选择战线肃清·%s', lost_void_const.POLYCHROME_DIFFICULTY)
+            log.info('菲林目标自动选择战线肃清·%s', self.config.polychrome_difficulty)
             log.info('当前仅辅助收集，不能自动确认全部菲林奖励')
 
         try:
@@ -351,19 +351,20 @@ class LostVoidApp(ZApplication):
     @operation_node(name='选择难度', node_max_retry_times=5)
     def choose_difficulty(self) -> OperationRoundResult:
         """
-        菲林目标在战线肃清固定使用难度五 其他目标沿用游戏当前难度
-        难度一~五只差一个字 lcs匹配会互相命中 这里用包含判断
+        菲林目标在战线肃清使用配置的难度 其他目标沿用游戏当前难度
+        难度一~六只差一个字 lcs匹配会互相命中 这里用包含判断
         """
         if not self.config.is_polychrome_mode:
             return self.round_success('无需选择')
 
-        target = gt(lost_void_const.POLYCHROME_DIFFICULTY, 'game')
+        difficulty = self.config.polychrome_difficulty
+        target = gt(difficulty, 'game')
         title_area = self.ctx.screen_loader.get_area('迷失之地-战线肃清', '标题-战线肃清')
         title_map = self.ctx.ocr_service.get_ocr_result_map(
             image=self.last_screenshot, rect=title_area.rect, crop_first=True,
         )
         if any(target in text.replace(' ', '') for text in title_map):
-            return self.round_success(f'已选择{lost_void_const.POLYCHROME_DIFFICULTY}')
+            return self.round_success(f'已选择{difficulty}')
 
         list_area = self.ctx.screen_loader.get_area('迷失之地-战线肃清', '区域-难度列表')
         list_map = self.ctx.ocr_service.get_ocr_result_map(
@@ -372,7 +373,7 @@ class LostVoidApp(ZApplication):
         for text, mrl in list_map.items():
             if target in text.replace(' ', '') and mrl.max is not None:
                 self.ctx.controller.click(mrl.max.center)
-                return self.round_retry(f'点击{lost_void_const.POLYCHROME_DIFFICULTY}', wait=1)
+                return self.round_retry(f'点击{difficulty}', wait=1)
 
         self.round_by_click_area('迷失之地-战线肃清', '按钮-难度')
         return self.round_retry('打开难度列表', wait=1)

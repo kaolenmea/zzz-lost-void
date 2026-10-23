@@ -7,9 +7,10 @@ from zzz_lv.application.hollow_zero.lost_void.lost_void_config import (
 )
 
 
-def test_legacy_extra_task_name_is_migrated(lv_config: LostVoidConfig) -> None:
-    lv_config.store.data['extra_task'] = '获取所有菲林奖励'
-    assert lv_config.extra_task == '战线肃清'
+@pytest.mark.parametrize('legacy_name', ['获取所有菲林奖励', '战线肃清'])
+def test_legacy_extra_task_name_is_migrated(lv_config: LostVoidConfig, legacy_name: str) -> None:
+    lv_config.store.data['extra_task'] = legacy_name
+    assert lv_config.extra_task == '获取大部分菲林奖励'
     assert lv_config.is_polychrome_mode
     assert lv_config.challenge_config == '菲林收集'
 
@@ -18,6 +19,14 @@ def test_unknown_extra_task_falls_back_to_default_challenge(lv_config: LostVoidC
     lv_config.store.data['extra_task'] = '不存在的目标'
     assert not lv_config.is_polychrome_mode
     assert lv_config.challenge_config == '通关效率'
+
+
+def test_polychrome_difficulty_default_and_fallback(lv_config: LostVoidConfig) -> None:
+    assert lv_config.polychrome_difficulty == '难度五'
+    lv_config.polychrome_difficulty = '难度六'
+    assert lv_config.polychrome_difficulty == '难度六'
+    lv_config.store.data['polychrome_difficulty'] = '难度七'
+    assert lv_config.polychrome_difficulty == '难度五'
 
 
 def test_default_extra_task_is_bounty_commission(lv_config: LostVoidConfig) -> None:
