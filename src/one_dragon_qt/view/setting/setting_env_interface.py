@@ -9,6 +9,8 @@ from qfluentwidgets import (
 from one_dragon.base.operation.one_dragon_context import OneDragonContext
 from one_dragon.envs.env_config import ScreenshotMethodEnum
 from one_dragon.utils.i18_utils import gt
+from one_dragon_qt.view.setting.setting_help_tips import ENV_SETTING_TIPS
+from one_dragon_qt.widgets.help_tip import apply_help_tips
 from one_dragon_qt.widgets.setting_card.combo_box_setting_card import (
     ComboBoxSettingCard,
 )
@@ -47,6 +49,7 @@ class SettingEnvInterface(VerticalScrollInterface):
         content_layout.addWidget(self._init_basic_group())
         content_layout.addWidget(self._init_key_group())
 
+        apply_help_tips(content_widget, ENV_SETTING_TIPS)
         return content_widget
 
     def _init_basic_group(self) -> SettingCardGroup:

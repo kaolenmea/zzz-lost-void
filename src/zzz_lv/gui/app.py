@@ -246,6 +246,9 @@ try:
             dialog = FirstRunGuideDialog(self.ctx, self)
             dialog.exec()
             self.ctx.env_config.first_guide_done = True
+            # 快速设置之后接着展示一次新手教程 之后可从主页顶部横幅再打开
+            from zzz_lv.gui.view.home.tutorial_dialog import TutorialDialog
+            TutorialDialog(self.ctx, self).exec()
 
         def closeEvent(self, event: QCloseEvent) -> None:
             """窗口关闭事件"""

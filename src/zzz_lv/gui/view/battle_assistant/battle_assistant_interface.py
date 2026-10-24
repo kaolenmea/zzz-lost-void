@@ -24,6 +24,7 @@ from one_dragon_qt.utils.config_utils import get_prop_adapter
 from one_dragon_qt.view.app_run_interface import AppRunInterface
 from one_dragon_qt.widgets.base_interface import BaseInterface
 from one_dragon_qt.widgets.column import Column
+from one_dragon_qt.widgets.help_tip import apply_help_tips
 from one_dragon_qt.widgets.setting_card.combo_box_setting_card import (
     ComboBoxSettingCard,
 )
@@ -47,6 +48,7 @@ from zzz_lv.application.battle_assistant.auto_battle_config import (
 )
 from zzz_lv.application.battle_assistant.dodge_assitant import dodge_assistant_const
 from zzz_lv.context.zzz_context import ZContext
+from zzz_lv.gui.help_tips import BATTLE_ASSISTANT_TIPS
 from zzz_lv.gui.view.battle_assistant.battle_state_display import (
     BattleStateDisplay,
     TaskDisplay,
@@ -153,6 +155,7 @@ class BattleAssistantInterface(AppRunInterface):
 
         self.mode_segment.setCurrentItem(self.MODE_AUTO_BATTLE)
 
+        apply_help_tips(top, BATTLE_ASSISTANT_TIPS)
         return top
 
     def _build_advanced_group(self) -> QWidget:

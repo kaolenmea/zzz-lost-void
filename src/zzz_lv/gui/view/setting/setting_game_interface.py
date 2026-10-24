@@ -18,6 +18,7 @@ from one_dragon.utils.i18_utils import gt
 from one_dragon.utils.log_utils import log
 from one_dragon_qt.widgets.column import Column
 from one_dragon_qt.widgets.combo_box import ComboBox
+from one_dragon_qt.widgets.help_tip import apply_help_tips
 from one_dragon_qt.widgets.setting_card.combo_box_setting_card import (
     ComboBoxSettingCard,
 )
@@ -45,6 +46,7 @@ from zzz_lv.config.game_config import (
     GamepadTypeEnum,
 )
 from zzz_lv.context.zzz_context import ZContext
+from zzz_lv.gui.help_tips import GAME_SETTING_TIPS
 
 
 class SettingGameInterface(VerticalScrollInterface):
@@ -74,6 +76,7 @@ class SettingGameInterface(VerticalScrollInterface):
         content_widget.add_widget(self._get_key_settings_group())
         content_widget.add_stretch(1)
 
+        apply_help_tips(content_widget, GAME_SETTING_TIPS)
         return content_widget
 
     def _get_game_group(self) -> QWidget:

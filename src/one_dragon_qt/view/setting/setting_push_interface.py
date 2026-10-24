@@ -17,7 +17,9 @@ from one_dragon.base.push.push_config import PushProxy
 from one_dragon.base.push.push_email_services import PushEmailServices
 from one_dragon.utils.i18_utils import gt
 from one_dragon_qt.utils.config_utils import get_prop_adapter
+from one_dragon_qt.view.setting.setting_help_tips import PUSH_SETTING_TIPS
 from one_dragon_qt.widgets.column import Column
+from one_dragon_qt.widgets.help_tip import apply_help_tips, set_help_tip
 from one_dragon_qt.widgets.setting_card.code_editor_setting_card import (
     CodeEditorSettingCard,
 )
@@ -160,6 +162,7 @@ class SettingPushInterface(VerticalScrollInterface):
 
         content_widget.add_stretch(1)
 
+        apply_help_tips(content_widget, PUSH_SETTING_TIPS)
         return content_widget
 
     def _create_card(self, channel_id: str, field: PushChannelConfigField) -> QWidget:
@@ -212,6 +215,13 @@ class SettingPushInterface(VerticalScrollInterface):
                 input_placeholder=field.placeholder,
                 parent=self,
             )
+
+        # 渠道的配置项太多 不逐个写说明 用字段自带的填写提示
+        if is_required or field.placeholder:
+            tip = gt('必填项。') if is_required else gt('选填项。')
+            if field.placeholder:
+                tip += gt('填写提示：') + field.placeholder
+            set_help_tip(card, tip)
 
         card.setObjectName(var_name)
         card.setVisible(False)

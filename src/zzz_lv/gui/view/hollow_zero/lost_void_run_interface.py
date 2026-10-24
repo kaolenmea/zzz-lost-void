@@ -18,6 +18,7 @@ from one_dragon.utils.log_utils import log
 from one_dragon_qt.utils.config_utils import get_prop_adapter
 from one_dragon_qt.view.app_run_interface import SplitAppRunInterface
 from one_dragon_qt.widgets.column import Column
+from one_dragon_qt.widgets.help_tip import apply_help_tips
 from one_dragon_qt.widgets.setting_card.combo_box_setting_card import (
     ComboBoxSettingCard,
 )
@@ -38,6 +39,7 @@ from zzz_lv.application.hollow_zero.lost_void.lost_void_config import (
 from zzz_lv.application.hollow_zero.lost_void.lost_void_run_record import (
     LostVoidRunRecord,
 )
+from zzz_lv.gui.help_tips import LOST_VOID_TIPS
 
 if TYPE_CHECKING:
     from zzz_lv.context.zzz_context import ZContext
@@ -148,6 +150,7 @@ class LostVoidRunInterface(SplitAppRunInterface):
         run_group.addSettingCard(self.depth_avoid_opt)
 
         left.add_stretch(1)
+        apply_help_tips(left, LOST_VOID_TIPS)
         return left
 
     def on_interface_shown(self) -> None:

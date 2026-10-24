@@ -19,7 +19,9 @@ from one_dragon.base.operation.one_dragon_context import OneDragonContext
 from one_dragon.utils import app_utils
 from one_dragon.utils.i18_utils import gt
 from one_dragon_qt.services.theme_manager import ThemeManager
+from one_dragon_qt.view.setting.setting_help_tips import CUSTOM_SETTING_TIPS
 from one_dragon_qt.widgets.column import Column
+from one_dragon_qt.widgets.help_tip import apply_help_tips
 from one_dragon_qt.widgets.setting_card.combo_box_setting_card import (
     ComboBoxSettingCard,
 )
@@ -54,6 +56,7 @@ class SettingCustomInterface(VerticalScrollInterface):
         content_widget.add_widget(self._init_basic_group())
         content_widget.add_stretch(1)
 
+        apply_help_tips(content_widget, CUSTOM_SETTING_TIPS)
         return content_widget
 
     def _init_basic_group(self) -> SettingCardGroup:

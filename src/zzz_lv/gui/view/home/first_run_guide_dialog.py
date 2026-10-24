@@ -9,6 +9,7 @@ from one_dragon.base.config.config_item import ConfigItem
 from one_dragon.base.operation.application import application_const
 from one_dragon.utils.i18_utils import gt
 from one_dragon_qt.utils.config_utils import get_prop_adapter
+from one_dragon_qt.widgets.help_tip import apply_help_tips
 from one_dragon_qt.widgets.setting_card.combo_box_setting_card import (
     ComboBoxSettingCard,
 )
@@ -22,6 +23,7 @@ from zzz_lv.application.hollow_zero.lost_void.lost_void_config import (
     LostVoidConfig,
     LostVoidTaskEnum,
 )
+from zzz_lv.gui.help_tips import LOST_VOID_TIPS
 
 if TYPE_CHECKING:
     from zzz_lv.context.zzz_context import ZContext
@@ -81,3 +83,5 @@ class FirstRunGuideDialog(MessageBoxBase):
         )
         self.team_no_opt.init_with_adapter(get_prop_adapter(config, 'predefined_team_no'))
         self.viewLayout.addWidget(self.team_no_opt)
+
+        apply_help_tips(self.widget, LOST_VOID_TIPS)

@@ -8,6 +8,7 @@ from one_dragon_qt.overlay.overlay_config import OverlayConfig
 from one_dragon_qt.overlay.overlay_manager import OverlayManager
 from one_dragon_qt.overlay.utils import win32_utils
 from one_dragon_qt.widgets.column import Column
+from one_dragon_qt.widgets.help_tip import apply_help_tips
 from one_dragon_qt.widgets.setting_card.expand_setting_card_group import (
     ExpandSettingCardGroup,
 )
@@ -22,6 +23,7 @@ from one_dragon_qt.widgets.setting_card.switch_setting_card import SwitchSetting
 from one_dragon_qt.widgets.setting_card.text_setting_card import TextSettingCard
 from one_dragon_qt.widgets.vertical_scroll_interface import VerticalScrollInterface
 from zzz_lv.context.zzz_context import ZContext
+from zzz_lv.gui.help_tips import OVERLAY_SETTING_TIPS
 
 
 class SettingOverlayInterface(VerticalScrollInterface):
@@ -67,6 +69,7 @@ class SettingOverlayInterface(VerticalScrollInterface):
         content_widget.add_widget(self.developer_widget)
 
         content_widget.add_stretch(1)
+        apply_help_tips(content_widget, OVERLAY_SETTING_TIPS)
         return content_widget
 
     def _init_basic_group(self) -> SettingCardGroup:

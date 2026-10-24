@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtGui import QColor, QDesktopServices, QPainter, QPen
 from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
@@ -25,6 +25,8 @@ from qfluentwidgets import (
     SubtitleLabel,
     TitleLabel,
     TransparentPushButton,
+    isDarkTheme,
+    themeColor,
 )
 
 from one_dragon.base.operation.application import application_const
@@ -37,6 +39,8 @@ from zzz_lv.gui.dialog.pre_flight_check_dialog import (
     PreFlightCheckDialog,
     check_pre_flight,
 )
+from zzz_lv.gui.view.home.tutorial_content import QUICK_STEPS
+from zzz_lv.gui.view.home.tutorial_dialog import TutorialDialog
 
 if TYPE_CHECKING:
     from zzz_lv.application.hollow_zero.lost_void.lost_void_config import (
@@ -130,6 +134,47 @@ class FeatureCard(SimpleCardWidget):
         self.btn_row.addWidget(btn)
 
 
+class TutorialBanner(QWidget):
+    """
+    新手教程横幅 放在主页最上面 用主题色描边和淡底色 让新用户一眼看到
+    """
+
+    def __init__(self, home: HomeInterface, parent: QWidget | None = None) -> None:
+        QWidget.__init__(self, parent=parent)
+        self._home: HomeInterface = home
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(_CARD_MARGIN, 16, _CARD_MARGIN, 16)
+        layout.setSpacing(16)
+
+        icon_widget = IconWidget(FluentIcon.HELP)
+        icon_widget.setFixedSize(36, 36)
+        layout.addWidget(icon_widget, 0, Qt.AlignmentFlag.AlignVCenter)
+
+        text_col = QVBoxLayout()
+        text_col.setSpacing(6)
+        text_col.addWidget(SubtitleLabel(gt('第一次使用？看新手教程，3 步就能开始')))
+        steps = '    ›    '.join(f'{i}  {gt(text)}' for i, text in enumerate(QUICK_STEPS, start=1))
+        text_col.addWidget(BodyLabel(steps))
+        layout.addLayout(text_col, 1)
+
+        self.open_btn = PrimaryPushButton(FluentIcon.BOOK_SHELF, gt('查看新手教程'))
+        self.open_btn.setFixedHeight(40)
+        self.open_btn.setMinimumWidth(160)
+        self.open_btn.clicked.connect(home.show_tutorial)
+        layout.addWidget(self.open_btn, 0, Qt.AlignmentFlag.AlignVCenter)
+
+    def paintEvent(self, event) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        color = QColor(themeColor())
+        fill = QColor(color)
+        fill.setAlpha(50 if isDarkTheme() else 28)
+        painter.setBrush(fill)
+        painter.setPen(QPen(color, 1.5))
+        painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 8, 8)
+
+
 class ReadinessCard(SimpleCardWidget):
     """
     运行准备状态 全部就绪时只显示一行 有问题时逐条列出并提供跳转按钮
@@ -218,6 +263,8 @@ class HomeInterface(VerticalScrollInterface):
         layout.setSpacing(16)
 
         layout.addLayout(self._init_header())
+
+        layout.addWidget(TutorialBanner(self))
 
         self.readiness_card = ReadinessCard(self)
         layout.addWidget(self.readiness_card)
@@ -382,6 +429,12 @@ class HomeInterface(VerticalScrollInterface):
 
     def _on_battle_open_clicked(self) -> None:
         self.main_window.switchTo(self.main_window.battle_assistant_interface)
+
+    def show_tutorial(self) -> None:
+        """
+        弹出新手教程
+        """
+        TutorialDialog(self.ctx, self.window()).exec()
 
     def _on_github_clicked(self) -> None:
         QDesktopServices.openUrl(QUrl(self.ctx.project_config.github_homepage))
